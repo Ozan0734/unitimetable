@@ -31,8 +31,15 @@ public class HataYoneticisi {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new HataYaniti(
                         "İstek okunamadı. JSON biçimini ve değerleri kontrol edin "
-                                + "(seviye: LISANS, YUKSEK_LISANS, DOKTORA; dil: TR, EN)",
+                                + "(seviye: LISANS, YUKSEK_LISANS, DOKTORA; dil: TR, EN; "
+                                + "derslik türü: SINIF, LABORATUVAR, AMFI)",
                         Map.of()));
+    }
+
+    @ExceptionHandler(GecersizIslemException.class)
+    public ResponseEntity<HataYaniti> gecersizIslem(GecersizIslemException hata) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new HataYaniti(hata.getMessage(), Map.of()));
     }
 
     @ExceptionHandler(KayitBulunamadiException.class)
@@ -45,7 +52,8 @@ public class HataYoneticisi {
     public ResponseEntity<HataYaniti> iliskiHatasi(DataIntegrityViolationException hata) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new HataYaniti(
-                                                "İşlem yapılamadı: kayıt başka kayıtlarla ilişkili, aynı adlı bir kayıt zaten var ya da bağlı olduğu kayıt bulunamadı",
+                        "İşlem yapılamadı: kayıt başka kayıtlarla ilişkili, "
+                                + "aynı adlı bir kayıt zaten var ya da bağlı olduğu kayıt bulunamadı",
                         Map.of()));
     }
 }
