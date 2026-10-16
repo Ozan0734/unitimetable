@@ -6,6 +6,7 @@ import java.util.Map;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -23,6 +24,15 @@ public class HataYoneticisi {
                 .forEach(f -> alanlar.putIfAbsent(f.getField(), f.getDefaultMessage()));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new HataYaniti("Gönderilen bilgilerde hata var", alanlar));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<HataYaniti> okunamayanIstek(HttpMessageNotReadableException hata) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new HataYaniti(
+                        "İstek okunamadı. JSON biçimini ve değerleri kontrol edin "
+                                + "(seviye: LISANS, YUKSEK_LISANS, DOKTORA; dil: TR, EN)",
+                        Map.of()));
     }
 
     @ExceptionHandler(KayitBulunamadiException.class)
