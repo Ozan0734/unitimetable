@@ -3,6 +3,7 @@ package com.unitimetable.demo.ortak;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -22,5 +23,19 @@ public class HataYoneticisi {
                 .forEach(f -> alanlar.putIfAbsent(f.getField(), f.getDefaultMessage()));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new HataYaniti("Gönderilen bilgilerde hata var", alanlar));
+    }
+
+    @ExceptionHandler(KayitBulunamadiException.class)
+    public ResponseEntity<HataYaniti> kayitBulunamadi(KayitBulunamadiException hata) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new HataYaniti(hata.getMessage(), Map.of()));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<HataYaniti> iliskiHatasi(DataIntegrityViolationException hata) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new HataYaniti(
+                        "İşlem yapılamadı: kayıt başka kayıtlarla ilişkili ya da bağlı olduğu kayıt bulunamadı",
+                        Map.of()));
     }
 }
