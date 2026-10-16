@@ -45,7 +45,7 @@ public class HataYoneticisi {
     public ResponseEntity<HataYaniti> iliskiHatasi(DataIntegrityViolationException hata) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new HataYaniti(
-                        "İşlem yapılamadı: kayıt başka kayıtlarla ilişkili ya da bağlı olduğu kayıt bulunamadı",
+                                                "İşlem yapılamadı: kayıt başka kayıtlarla ilişkili, aynı adlı bir kayıt zaten var ya da bağlı olduğu kayıt bulunamadı",
                         Map.of()));
     }
 }
