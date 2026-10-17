@@ -32,7 +32,9 @@ public class HataYoneticisi {
                 .body(new HataYaniti(
                         "İstek okunamadı. JSON biçimini ve değerleri kontrol edin "
                                 + "(seviye: LISANS, YUKSEK_LISANS, DOKTORA; dil: TR, EN; "
-                                + "derslik türü: SINIF, LABORATUVAR, AMFI)",
+                                + "derslik türü: SINIF, LABORATUVAR, AMFI; "
+                                + "proje durumu: TASLAK, YAYINDA; "
+                                + "ders türü: NORMAL, YERLESIMSIZ)",
                         Map.of()));
     }
 
