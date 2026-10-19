@@ -1,5 +1,7 @@
 package com.unitimetable.demo.kullanici;
 
+import java.io.Serializable;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -29,6 +31,6 @@ public final class KullaniciDto {
     }
 
     public record Yanit(Long id, Long kurumId, Long fakulteId, Long bolumId, String adSoyad,
-            String eposta, KullaniciRolu rol) {
+            String eposta, KullaniciRolu rol) implements Serializable {
     }
 }
