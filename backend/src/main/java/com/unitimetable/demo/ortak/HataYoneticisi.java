@@ -45,6 +45,12 @@ public class HataYoneticisi {
                 .body(new HataYaniti(hata.getMessage(), Map.of()));
     }
 
+    @ExceptionHandler(YetkisizException.class)
+    public ResponseEntity<HataYaniti> yetkisiz(YetkisizException hata) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new HataYaniti(hata.getMessage(), Map.of()));
+    }
+
     @ExceptionHandler(KayitBulunamadiException.class)
     public ResponseEntity<HataYaniti> kayitBulunamadi(KayitBulunamadiException hata) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
