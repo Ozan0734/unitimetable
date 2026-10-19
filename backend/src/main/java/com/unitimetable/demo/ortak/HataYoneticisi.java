@@ -34,7 +34,8 @@ public class HataYoneticisi {
                                 + "(seviye: LISANS, YUKSEK_LISANS, DOKTORA; dil: TR, EN; "
                                 + "derslik türü: SINIF, LABORATUVAR, AMFI; "
                                 + "proje durumu: TASLAK, YAYINDA; "
-                                + "ders türü: NORMAL, YERLESIMSIZ)",
+                                + "ders türü: NORMAL, YERLESIMSIZ; "
+                                + "rol: SUPERADMIN, FAKULTE, ASISTAN)",
                         Map.of()));
     }
 
