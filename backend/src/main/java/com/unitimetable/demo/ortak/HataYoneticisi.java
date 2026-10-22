@@ -51,6 +51,12 @@ public class HataYoneticisi {
                 .body(new HataYaniti(hata.getMessage(), Map.of()));
     }
 
+    @ExceptionHandler(YasakException.class)
+    public ResponseEntity<HataYaniti> yasak(YasakException hata) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new HataYaniti(hata.getMessage(), Map.of()));
+    }
+
     @ExceptionHandler(KayitBulunamadiException.class)
     public ResponseEntity<HataYaniti> kayitBulunamadi(KayitBulunamadiException hata) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
