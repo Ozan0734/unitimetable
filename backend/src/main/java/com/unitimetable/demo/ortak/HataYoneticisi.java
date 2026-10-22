@@ -35,7 +35,8 @@ public class HataYoneticisi {
                                 + "derslik türü: SINIF, LABORATUVAR, AMFI; "
                                 + "proje durumu: TASLAK, YAYINDA; "
                                 + "ders türü: NORMAL, YERLESIMSIZ; "
-                                + "rol: SUPERADMIN, FAKULTE, ASISTAN)",
+                                + "rol: SUPERADMIN, FAKULTE, ASISTAN; "
+                                + "müsaitlik durumu: MUSAIT_DEGIL, TERCIH)",
                         Map.of()));
     }
 
