@@ -6,6 +6,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.unitimetable.demo.blok.BlokService;
 import com.unitimetable.demo.ortak.GecersizIslemException;
 import com.unitimetable.demo.ortak.KayitBulunamadiException;
 import com.unitimetable.demo.ortak.YetkiKontrol;
@@ -21,12 +22,14 @@ public class DersService {
     private final DersRepository repository;
     private final ProgramProjesiRepository projeRepository;
     private final YetkiKontrol yetki;
+    private final BlokService blokService;
 
     public DersService(DersRepository repository, ProgramProjesiRepository projeRepository,
-            YetkiKontrol yetki) {
+            YetkiKontrol yetki, BlokService blokService) {
         this.repository = repository;
         this.projeRepository = projeRepository;
         this.yetki = yetki;
+        this.blokService = blokService;
     }
 
     @Transactional(readOnly = true)
@@ -79,6 +82,7 @@ public class DersService {
         ders.setTur(istek.tur());
         ders.setSaat(saat.haftalikSaat(), saat.ifade());
         repository.flush();
+        blokService.dersIcinYenile(ders);
         return yanita(ders);
     }
 

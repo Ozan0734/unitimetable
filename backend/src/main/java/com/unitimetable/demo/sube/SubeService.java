@@ -8,6 +8,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.unitimetable.demo.blok.BlokService;
 import com.unitimetable.demo.ders.Ders;
 import com.unitimetable.demo.ders.DersRepository;
 import com.unitimetable.demo.ortak.KayitBulunamadiException;
@@ -19,11 +20,14 @@ public class SubeService {
     private final SubeRepository repository;
     private final DersRepository dersRepository;
     private final YetkiKontrol yetki;
+    private final BlokService blokService;
 
-    public SubeService(SubeRepository repository, DersRepository dersRepository, YetkiKontrol yetki) {
+    public SubeService(SubeRepository repository, DersRepository dersRepository, YetkiKontrol yetki,
+            BlokService blokService) {
         this.repository = repository;
         this.dersRepository = dersRepository;
         this.yetki = yetki;
+        this.blokService = blokService;
     }
 
     @Transactional(readOnly = true)
@@ -57,13 +61,15 @@ public class SubeService {
 
     @Transactional
     public SubeDto.Yanit olustur(SubeDto.Istek istek) {
-        yetki.bolumeErisim(dersBolumu(istek.dersId()));
+        Ders ders = dersBul(istek.dersId());
+        yetki.bolumeErisim(ders.getBolumId());
         int subeNo = (istek.subeNo() != null) ? istek.subeNo() : sonrakiNo(istek.dersId());
         Sube kaydedilen = repository.saveAndFlush(new Sube(
                 istek.dersId(), istek.ogretimElemaniId(), subeNo, istek.tahminiOgrenci(),
                 varsayilanFalse(istek.sinifCakismaIzni()),
                 varsayilanFalse(istek.derslikCakismaIzni()),
                 varsayilanFalse(istek.cokluDerslikIzni())));
+        blokService.subeIcinYenile(ders, kaydedilen);
         return yanita(kaydedilen);
     }
 
@@ -87,10 +93,13 @@ public class SubeService {
         repository.flush();
     }
 
-    private Long dersBolumu(Long dersId) {
+    private Ders dersBul(Long dersId) {
         return dersRepository.findById(dersId)
-                .orElseThrow(() -> new KayitBulunamadiException("Ders bulunamadı (id: " + dersId + ")"))
-                .getBolumId();
+                .orElseThrow(() -> new KayitBulunamadiException("Ders bulunamadı (id: " + dersId + ")"));
+    }
+
+    private Long dersBolumu(Long dersId) {
+        return dersBul(dersId).getBolumId();
     }
 
     private List<Sube> erisilebilenler(List<Sube> subeler) {
