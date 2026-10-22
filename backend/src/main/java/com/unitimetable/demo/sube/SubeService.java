@@ -1,42 +1,63 @@
 package com.unitimetable.demo.sube;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.unitimetable.demo.ders.Ders;
+import com.unitimetable.demo.ders.DersRepository;
 import com.unitimetable.demo.ortak.KayitBulunamadiException;
+import com.unitimetable.demo.ortak.YetkiKontrol;
 
 @Service
 public class SubeService {
 
     private final SubeRepository repository;
+    private final DersRepository dersRepository;
+    private final YetkiKontrol yetki;
 
-    public SubeService(SubeRepository repository) {
+    public SubeService(SubeRepository repository, DersRepository dersRepository, YetkiKontrol yetki) {
         this.repository = repository;
+        this.dersRepository = dersRepository;
+        this.yetki = yetki;
     }
 
     @Transactional(readOnly = true)
     public List<SubeDto.Yanit> listele(Long dersId, Long ogretimElemaniId) {
         List<Sube> subeler;
         if (dersId != null) {
+            yetki.bolumeErisim(dersBolumu(dersId));
             subeler = repository.findByDersIdOrderBySubeNo(dersId);
         } else if (ogretimElemaniId != null) {
-            subeler = repository.findByOgretimElemaniIdOrderByDersIdAscSubeNoAsc(ogretimElemaniId);
+            subeler = erisilebilenler(
+                    repository.findByOgretimElemaniIdOrderByDersIdAscSubeNoAsc(ogretimElemaniId));
         } else {
-            subeler = repository.findAll(Sort.by("dersId", "subeNo"));
+            List<Long> izinli = yetki.erisilebilirBolumler();
+            if (izinli == null) {
+                subeler = repository.findAll(Sort.by("dersId", "subeNo"));
+            } else if (izinli.isEmpty()) {
+                subeler = List.of();
+            } else {
+                subeler = repository.findByDersBolumIn(izinli);
+            }
         }
         return subeler.stream().map(SubeService::yanita).toList();
     }
 
     @Transactional(readOnly = true)
     public SubeDto.Yanit getir(Long id) {
-        return yanita(bul(id));
+        Sube sube = bul(id);
+        yetki.bolumeErisim(dersBolumu(sube.getDersId()));
+        return yanita(sube);
     }
 
     @Transactional
     public SubeDto.Yanit olustur(SubeDto.Istek istek) {
+        yetki.bolumeErisim(dersBolumu(istek.dersId()));
         int subeNo = (istek.subeNo() != null) ? istek.subeNo() : sonrakiNo(istek.dersId());
         Sube kaydedilen = repository.saveAndFlush(new Sube(
                 istek.dersId(), istek.ogretimElemaniId(), subeNo, istek.tahminiOgrenci(),
@@ -49,6 +70,7 @@ public class SubeService {
     @Transactional
     public SubeDto.Yanit guncelle(Long id, SubeDto.Guncelleme istek) {
         Sube sube = bul(id);
+        yetki.bolumeErisim(dersBolumu(sube.getDersId()));
         sube.guncelle(istek.ogretimElemaniId(), istek.tahminiOgrenci(),
                 varsayilanFalse(istek.sinifCakismaIzni()),
                 varsayilanFalse(istek.derslikCakismaIzni()),
@@ -59,8 +81,29 @@ public class SubeService {
 
     @Transactional
     public void sil(Long id) {
-        repository.delete(bul(id));
+        Sube sube = bul(id);
+        yetki.bolumeErisim(dersBolumu(sube.getDersId()));
+        repository.delete(sube);
         repository.flush();
+    }
+
+    private Long dersBolumu(Long dersId) {
+        return dersRepository.findById(dersId)
+                .orElseThrow(() -> new KayitBulunamadiException("Ders bulunamadı (id: " + dersId + ")"))
+                .getBolumId();
+    }
+
+    private List<Sube> erisilebilenler(List<Sube> subeler) {
+        List<Long> izinli = yetki.erisilebilirBolumler();
+        if (izinli == null) {
+            return subeler;
+        }
+        Set<Long> dersIdler = subeler.stream().map(Sube::getDersId).collect(Collectors.toSet());
+        Set<Long> izinliDersler = dersRepository.findAllById(dersIdler).stream()
+                .filter(d -> izinli.contains(d.getBolumId()))
+                .map(Ders::getId)
+                .collect(Collectors.toSet());
+        return subeler.stream().filter(s -> izinliDersler.contains(s.getDersId())).toList();
     }
 
     private int sonrakiNo(Long dersId) {
