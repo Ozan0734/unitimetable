@@ -36,7 +36,9 @@ public class HataYoneticisi {
                                 + "proje durumu: TASLAK, YAYINDA; "
                                 + "ders türü: NORMAL, YERLESIMSIZ; "
                                 + "rol: SUPERADMIN, FAKULTE, ASISTAN; "
-                                + "müsaitlik durumu: MUSAIT_DEGIL, TERCIH)",
+                                + "müsaitlik durumu: MUSAIT_DEGIL, TERCIH; "
+                                + "gün tercihi türü: BOS_GUN_SAYISI, ARDISIK_GUN, TERCIH_EDILEN_GUN, KACINILAN_GUN; "
+                                + "katılık: ZORUNLU, TERCIH)",
                         Map.of()));
     }
 
