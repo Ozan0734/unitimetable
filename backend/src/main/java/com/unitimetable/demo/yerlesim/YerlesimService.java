@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -42,6 +43,7 @@ public class YerlesimService {
     private final DerslikRepository derslikRepository;
     private final ZamanIzgarasiRepository izgaraRepository;
     private final CakismaDenetleyici denetleyici;
+    private final IslemGecmisiService gecmis;
     private final YetkiKontrol yetki;
 
     public YerlesimService(YerlesimRepository repository,
@@ -53,6 +55,7 @@ public class YerlesimService {
             DerslikRepository derslikRepository,
             ZamanIzgarasiRepository izgaraRepository,
             CakismaDenetleyici denetleyici,
+            IslemGecmisiService gecmis,
             YetkiKontrol yetki) {
         this.repository = repository;
         this.derslikEslesmeRepository = derslikEslesmeRepository;
@@ -63,6 +66,7 @@ public class YerlesimService {
         this.derslikRepository = derslikRepository;
         this.izgaraRepository = izgaraRepository;
         this.denetleyici = denetleyici;
+        this.gecmis = gecmis;
         this.yetki = yetki;
     }
 
@@ -139,6 +143,8 @@ public class YerlesimService {
             throw new CakismaException(ihlaller, true);
         }
 
+        BlokDurumu onceki = gecmis.mevcutDurum(blokId);
+
         Yerlesim yerlesim;
         if (mevcut == null) {
             yerlesim = repository.saveAndFlush(new Yerlesim(blokId, istek.gun(), istek.baslangicSlot()));
@@ -153,24 +159,39 @@ public class YerlesimService {
         }
         repository.flush();
         derslikEslesmeRepository.flush();
+
+        BlokDurumu sonraki = gecmis.mevcutDurum(blokId);
+        if (!Objects.equals(onceki, sonraki)) {
+            gecmis.kaydet(b.proje().getId(), blokId,
+                    mevcut == null ? IslemTuru.YERLESTIR : IslemTuru.TASI, onceki, sonraki);
+        }
         return yanitlar(List.of(yerlesim), ihlaller).get(0);
     }
 
     @Transactional
     public void kaldir(Long blokId) {
-        Yerlesim yerlesim = yetkiliYerlesim(blokId);
+        Baglam b = baglam(blokId);
+        Yerlesim yerlesim = mevcutYerlesim(blokId);
         if (yerlesim.isKilitli()) {
             throw new GecersizIslemException("Kilitli bloğu kaldırmak için önce kilidi kaldırın");
         }
+        BlokDurumu onceki = gecmis.mevcutDurum(blokId);
         repository.delete(yerlesim);
         repository.flush();
+        gecmis.kaydet(b.proje().getId(), blokId, IslemTuru.KALDIR, onceki, null);
     }
 
     @Transactional
     public YerlesimDto.Yanit kilitle(Long blokId, boolean kilitli) {
-        Yerlesim yerlesim = yetkiliYerlesim(blokId);
+        Baglam b = baglam(blokId);
+        Yerlesim yerlesim = mevcutYerlesim(blokId);
+        BlokDurumu onceki = gecmis.mevcutDurum(blokId);
         yerlesim.setKilitli(kilitli);
         repository.flush();
+        BlokDurumu sonraki = gecmis.mevcutDurum(blokId);
+        if (!Objects.equals(onceki, sonraki)) {
+            gecmis.kaydet(b.proje().getId(), blokId, IslemTuru.KILIT, onceki, sonraki);
+        }
         return yanitlar(List.of(yerlesim), List.of()).get(0);
     }
 
@@ -181,6 +202,12 @@ public class YerlesimService {
         yetki.bolumeErisim(ders.getBolumId());
         ProgramProjesi proje = projeBul(ders.getProjeId());
         return new Baglam(blok, sube, ders, proje);
+    }
+
+    private Yerlesim mevcutYerlesim(Long blokId) {
+        return repository.findByBlokId(blokId)
+                .orElseThrow(() -> new KayitBulunamadiException(
+                        "Blok henüz yerleştirilmemiş (blok id: " + blokId + ")"));
     }
 
     private List<Long> girdiyiDogrula(Baglam b, YerlesimDto.Istek istek) {
@@ -221,15 +248,6 @@ public class YerlesimService {
             }
         }
         return new ArrayList<>(tekil);
-    }
-
-    private Yerlesim yetkiliYerlesim(Long blokId) {
-        DersBlogu blok = blokBul(blokId);
-        Ders ders = dersBul(subeBul(blok.getSubeId()).getDersId());
-        yetki.bolumeErisim(ders.getBolumId());
-        return repository.findByBlokId(blokId)
-                .orElseThrow(() -> new KayitBulunamadiException(
-                        "Blok henüz yerleştirilmemiş (blok id: " + blokId + ")"));
     }
 
     private List<YerlesimDto.Yanit> yanitlar(List<Yerlesim> yerlesimler, List<Ihlal> ihlaller) {
