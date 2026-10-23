@@ -30,6 +30,9 @@ import com.unitimetable.demo.sube.SubeRepository;
 @Service
 public class YerlesimService {
 
+    private record Baglam(DersBlogu blok, Sube sube, Ders ders, ProgramProjesi proje) {
+    }
+
     private final YerlesimRepository repository;
     private final YerlesimDerslikRepository derslikEslesmeRepository;
     private final DersBloguRepository blokRepository;
@@ -38,6 +41,7 @@ public class YerlesimService {
     private final ProgramProjesiRepository projeRepository;
     private final DerslikRepository derslikRepository;
     private final ZamanIzgarasiRepository izgaraRepository;
+    private final CakismaDenetleyici denetleyici;
     private final YetkiKontrol yetki;
 
     public YerlesimService(YerlesimRepository repository,
@@ -48,6 +52,7 @@ public class YerlesimService {
             ProgramProjesiRepository projeRepository,
             DerslikRepository derslikRepository,
             ZamanIzgarasiRepository izgaraRepository,
+            CakismaDenetleyici denetleyici,
             YetkiKontrol yetki) {
         this.repository = repository;
         this.derslikEslesmeRepository = derslikEslesmeRepository;
@@ -57,6 +62,7 @@ public class YerlesimService {
         this.projeRepository = projeRepository;
         this.derslikRepository = derslikRepository;
         this.izgaraRepository = izgaraRepository;
+        this.denetleyici = denetleyici;
         this.yetki = yetki;
     }
 
@@ -74,7 +80,7 @@ public class YerlesimService {
         } else {
             throw new GecersizIslemException("projeId ya da subeId verilmelidir");
         }
-        return yanitlar(yerlesimler);
+        return yanitlar(yerlesimler, List.of());
     }
 
     @Transactional(readOnly = true)
@@ -99,21 +105,39 @@ public class YerlesimService {
         }).toList();
     }
 
+    /**
+     * Bloğu bu yere koymadan, oluşacak ihlalleri döndürür. Sürükle-bırak sırasında anlık
+     * geri bildirim için kullanılır.
+     */
+    @Transactional(readOnly = true)
+    public List<Ihlal> kontrol(Long blokId, YerlesimDto.Istek istek) {
+        Baglam b = baglam(blokId);
+        List<Long> derslikIdler = girdiyiDogrula(b, istek);
+        return denetleyici.kontrolEt(b.blok(), b.sube(), b.ders(), istek.gun(),
+                istek.baslangicSlot(), derslikIdler);
+    }
+
     @Transactional
     public YerlesimDto.Yanit yerlestir(Long blokId, YerlesimDto.Istek istek) {
-        DersBlogu blok = blokBul(blokId);
-        Sube sube = subeBul(blok.getSubeId());
-        Ders ders = dersBul(sube.getDersId());
-        yetki.bolumeErisim(ders.getBolumId());
-        ProgramProjesi proje = projeBul(ders.getProjeId());
+        Baglam b = baglam(blokId);
 
         Yerlesim mevcut = repository.findByBlokId(blokId).orElse(null);
         if (mevcut != null && mevcut.isKilitli()) {
             throw new GecersizIslemException("Bu blok kilitli, taşımak için önce kilidi kaldırın");
         }
 
-        izgarayiDogrula(proje.getKurumId(), istek.gun(), istek.baslangicSlot(), blok.getSure());
-        List<Long> derslikIdler = dersliklerDogrula(proje.getKurumId(), sube, istek.derslikIdler());
+        List<Long> derslikIdler = girdiyiDogrula(b, istek);
+
+        List<Ihlal> ihlaller = denetleyici.kontrolEt(b.blok(), b.sube(), b.ders(), istek.gun(),
+                istek.baslangicSlot(), derslikIdler);
+        boolean engelVar = ihlaller.stream().anyMatch(i -> i.tur() == IhlalTuru.ENGEL);
+        boolean uyariVar = ihlaller.stream().anyMatch(i -> i.tur() == IhlalTuru.UYARI);
+        if (engelVar) {
+            throw new CakismaException(ihlaller, false);
+        }
+        if (uyariVar && !Boolean.TRUE.equals(istek.uyarilariOnayla())) {
+            throw new CakismaException(ihlaller, true);
+        }
 
         Yerlesim yerlesim;
         if (mevcut == null) {
@@ -129,7 +153,7 @@ public class YerlesimService {
         }
         repository.flush();
         derslikEslesmeRepository.flush();
-        return yanitlar(List.of(yerlesim)).get(0);
+        return yanitlar(List.of(yerlesim), ihlaller).get(0);
     }
 
     @Transactional
@@ -147,7 +171,21 @@ public class YerlesimService {
         Yerlesim yerlesim = yetkiliYerlesim(blokId);
         yerlesim.setKilitli(kilitli);
         repository.flush();
-        return yanitlar(List.of(yerlesim)).get(0);
+        return yanitlar(List.of(yerlesim), List.of()).get(0);
+    }
+
+    private Baglam baglam(Long blokId) {
+        DersBlogu blok = blokBul(blokId);
+        Sube sube = subeBul(blok.getSubeId());
+        Ders ders = dersBul(sube.getDersId());
+        yetki.bolumeErisim(ders.getBolumId());
+        ProgramProjesi proje = projeBul(ders.getProjeId());
+        return new Baglam(blok, sube, ders, proje);
+    }
+
+    private List<Long> girdiyiDogrula(Baglam b, YerlesimDto.Istek istek) {
+        izgarayiDogrula(b.proje().getKurumId(), istek.gun(), istek.baslangicSlot(), b.blok().getSure());
+        return dersliklerDogrula(b.proje().getKurumId(), b.sube(), istek.derslikIdler());
     }
 
     private void izgarayiDogrula(Long kurumId, int gun, int baslangicSlot, int sure) {
@@ -194,7 +232,7 @@ public class YerlesimService {
                         "Blok henüz yerleştirilmemiş (blok id: " + blokId + ")"));
     }
 
-    private List<YerlesimDto.Yanit> yanitlar(List<Yerlesim> yerlesimler) {
+    private List<YerlesimDto.Yanit> yanitlar(List<Yerlesim> yerlesimler, List<Ihlal> ihlaller) {
         if (yerlesimler.isEmpty()) {
             return List.of();
         }
@@ -215,7 +253,7 @@ public class YerlesimService {
             List<Long> idler = derslikler.getOrDefault(y.getId(), List.of()).stream().sorted().toList();
             return new YerlesimDto.Yanit(y.getId(), blok.getId(), sube.getId(), sube.getDersId(),
                     y.getGun(), y.getBaslangicSlot(), y.getBaslangicSlot() + blok.getSure() - 1,
-                    blok.getSure(), idler, y.isKilitli());
+                    blok.getSure(), idler, y.isKilitli(), ihlaller);
         }).toList();
     }
 

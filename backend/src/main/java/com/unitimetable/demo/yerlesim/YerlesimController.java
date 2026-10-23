@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -33,6 +34,11 @@ public class YerlesimController {
     @GetMapping("/api/yerlesmeyen-bloklar")
     public List<YerlesimDto.YerlesmeyenBlok> yerlesmeyenler(@RequestParam Long projeId) {
         return service.yerlesmeyenler(projeId);
+    }
+
+    @PostMapping("/api/bloklar/{blokId}/yerlesim/kontrol")
+    public List<Ihlal> kontrol(@PathVariable Long blokId, @Valid @RequestBody YerlesimDto.Istek istek) {
+        return service.kontrol(blokId, istek);
     }
 
     @PutMapping("/api/bloklar/{blokId}/yerlesim")

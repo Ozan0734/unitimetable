@@ -1,6 +1,7 @@
 package com.unitimetable.demo.ortak;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -11,10 +12,16 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.unitimetable.demo.yerlesim.CakismaException;
+import com.unitimetable.demo.yerlesim.Ihlal;
+
 @RestControllerAdvice
 public class HataYoneticisi {
 
     public record HataYaniti(String mesaj, Map<String, String> alanlar) {
+    }
+
+    public record CakismaYaniti(String mesaj, boolean onayGerekli, List<Ihlal> ihlaller) {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -64,6 +71,15 @@ public class HataYoneticisi {
     public ResponseEntity<HataYaniti> kayitBulunamadi(KayitBulunamadiException hata) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new HataYaniti(hata.getMessage(), Map.of()));
+    }
+
+    @ExceptionHandler(CakismaException.class)
+    public ResponseEntity<CakismaYaniti> cakisma(CakismaException hata) {
+        String mesaj = hata.isOnayGerekli()
+                ? "Yerleştirme için onayınız gerekiyor: uyarılar var"
+                : "Yerleştirme yapılamadı: kural ihlali var";
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new CakismaYaniti(mesaj, hata.isOnayGerekli(), hata.getIhlaller()));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
