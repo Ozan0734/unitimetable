@@ -9,5 +9,7 @@ public interface YerlesimDerslikRepository extends JpaRepository<YerlesimDerslik
 
     List<YerlesimDerslik> findByYerlesimIdIn(Collection<Long> yerlesimIdler);
 
+    List<YerlesimDerslik> findByDerslikId(Long derslikId);
+
     void deleteByYerlesimId(Long yerlesimId);
 }

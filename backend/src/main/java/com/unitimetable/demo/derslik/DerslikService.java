@@ -7,14 +7,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.unitimetable.demo.ortak.KayitBulunamadiException;
+import com.unitimetable.demo.yerlesim.DerslikKullanimService;
+import com.unitimetable.demo.yerlesim.SilinemezException;
 
 @Service
 public class DerslikService {
 
     private final DerslikRepository repository;
+    private final DerslikKullanimService kullanimService;
 
-    public DerslikService(DerslikRepository repository) {
+    public DerslikService(DerslikRepository repository, DerslikKullanimService kullanimService) {
         this.repository = repository;
+        this.kullanimService = kullanimService;
     }
 
     @Transactional(readOnly = true)
@@ -32,7 +36,7 @@ public class DerslikService {
 
     @Transactional
     public DerslikDto.Yanit olustur(DerslikDto.Istek istek) {
-        Derslik kaydedilen = repository.save(new Derslik(
+        Derslik kaydedilen = repository.saveAndFlush(new Derslik(
                 istek.kurumId(), istek.ad().trim(), istek.kapasite(), istek.tur()));
         return yanita(kaydedilen);
     }
@@ -50,6 +54,12 @@ public class DerslikService {
     @Transactional
     public void sil(Long id) {
         Derslik derslik = bul(id);
+        List<DerslikKullanimService.Kullanim> kullanimlar = kullanimService.kullanimlar(id);
+        if (!kullanimlar.isEmpty()) {
+            throw new SilinemezException("Derslik (" + derslik.getAd() + ") silinemez: içinde "
+                    + kullanimlar.size() + " ders bloğu yerleşik. Önce bu blokları kaldırın "
+                    + "ya da başka dersliklere taşıyın", kullanimlar);
+        }
         repository.delete(derslik);
         repository.flush();
     }
