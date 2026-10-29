@@ -21,6 +21,14 @@ public class GuvenlikAyarlari {
             "/api/lab-gun-dagilimi/**"
     };
 
+    private static final String[] ACIK_ADRESLER = {
+            "/api/giris",
+            "/actuator/health",
+            "/swagger-ui.html",
+            "/swagger-ui/**",
+            "/v3/api-docs/**"
+    };
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -34,7 +42,7 @@ public class GuvenlikAyarlari {
                 .formLogin(form -> form.disable())
                 .logout(logout -> logout.disable())
                 .authorizeHttpRequests(istekler -> istekler
-                        .requestMatchers("/api/giris", "/actuator/health").permitAll()
+                        .requestMatchers(ACIK_ADRESLER).permitAll()
                         .requestMatchers("/api/kullanicilar/**").hasRole("SUPERADMIN")
                         .requestMatchers(HttpMethod.GET, KURUM_YAPISI).authenticated()
                         .requestMatchers(KURUM_YAPISI).hasAnyRole("SUPERADMIN", "FAKULTE")
