@@ -68,7 +68,7 @@ public class DersService {
         SaatBilgisi saat = saatBilgisi(istek.tur(), istek.haftalikSaat(), istek.saatIfadesi());
         Ders kaydedilen = repository.saveAndFlush(new Ders(
                 istek.projeId(), istek.bolumId(), istek.kod().trim(), istek.ad().trim(),
-                istek.tur(), saat.haftalikSaat(), saat.ifade()));
+                istek.tur(), Boolean.TRUE.equals(istek.sanal()), saat.haftalikSaat(), saat.ifade()));
         return yanita(kaydedilen);
     }
 
@@ -80,6 +80,7 @@ public class DersService {
         ders.setKod(istek.kod().trim());
         ders.setAd(istek.ad().trim());
         ders.setTur(istek.tur());
+        ders.setSanal(Boolean.TRUE.equals(istek.sanal()));
         ders.setSaat(saat.haftalikSaat(), saat.ifade());
         repository.flush();
         blokService.dersIcinYenile(ders);
@@ -117,6 +118,6 @@ public class DersService {
                 ? List.of()
                 : SaatIfadesi.bloklar(d.getSaatIfadesi());
         return new DersDto.Yanit(d.getId(), d.getProjeId(), d.getBolumId(), d.getKod(), d.getAd(),
-                d.getTur(), d.getHaftalikSaat(), d.getSaatIfadesi(), bloklar);
+                d.getTur(), d.isSanal(), d.getHaftalikSaat(), d.getSaatIfadesi(), bloklar);
     }
 }

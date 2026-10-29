@@ -71,7 +71,7 @@ public class BlokService {
      */
     @Transactional
     public void subeIcinYenile(Ders ders, Sube sube) {
-        List<Integer> istenen = (ders.getTur() == DersTuru.NORMAL && ders.getSaatIfadesi() != null)
+                List<Integer> istenen = (ders.getTur() != DersTuru.YERLESIMSIZ && ders.getSaatIfadesi() != null)
                 ? SaatIfadesi.bloklar(ders.getSaatIfadesi())
                 : List.of();
 

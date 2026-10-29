@@ -41,7 +41,7 @@ public class HataYoneticisi {
                                 + "(seviye: LISANS, YUKSEK_LISANS, DOKTORA; dil: TR, EN; "
                                 + "derslik türü: SINIF, LABORATUVAR, AMFI; "
                                 + "proje durumu: TASLAK, YAYINDA; "
-                                + "ders türü: NORMAL, YERLESIMSIZ; "
+                                + "ders türü: NORMAL, YERLESIMSIZ, SEMINER; "
                                 + "rol: SUPERADMIN, FAKULTE, ASISTAN; "
                                 + "müsaitlik durumu: MUSAIT_DEGIL, TERCIH; "
                                 + "gün tercihi türü: BOS_GUN_SAYISI, ARDISIK_GUN, TERCIH_EDILEN_GUN, KACINILAN_GUN; "

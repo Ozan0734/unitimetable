@@ -33,6 +33,9 @@ public class Ders {
     @Column(nullable = false, length = 20)
     private DersTuru tur;
 
+    @Column(nullable = false)
+    private boolean sanal;
+
     @Column(name = "haftalik_saat")
     private Integer haftalikSaat;
 
@@ -42,13 +45,14 @@ public class Ders {
     protected Ders() {
     }
 
-    public Ders(Long projeId, Long bolumId, String kod, String ad, DersTuru tur,
+    public Ders(Long projeId, Long bolumId, String kod, String ad, DersTuru tur, boolean sanal,
             Integer haftalikSaat, String saatIfadesi) {
         this.projeId = projeId;
         this.bolumId = bolumId;
         this.kod = kod;
         this.ad = ad;
         this.tur = tur;
+        this.sanal = sanal;
         this.haftalikSaat = haftalikSaat;
         this.saatIfadesi = saatIfadesi;
     }
@@ -77,6 +81,10 @@ public class Ders {
         return tur;
     }
 
+    public boolean isSanal() {
+        return sanal;
+    }
+
     public Integer getHaftalikSaat() {
         return haftalikSaat;
     }
@@ -95,6 +103,10 @@ public class Ders {
 
     public void setTur(DersTuru tur) {
         this.tur = tur;
+    }
+
+    public void setSanal(boolean sanal) {
+        this.sanal = sanal;
     }
 
     public void setSaat(Integer haftalikSaat, String saatIfadesi) {
