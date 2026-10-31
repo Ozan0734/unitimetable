@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.unitimetable.demo.yerlesim.DerslikSecici;
 
 import com.unitimetable.demo.blok.DersBlogu;
 import com.unitimetable.demo.blok.DersBloguRepository;
@@ -177,7 +178,7 @@ public class OtomatikPlanlamaService {
                 .thenComparingLong(DersBlogu::getId));
 
         List<Derslik> kurumDersliklari = derslikRepository.findByKurumIdOrderByAd(proje.getKurumId());
-        Map<Long, List<Derslik>> bolumOnbellegi = new HashMap<>();
+         Map<String, List<Derslik>> bolumOnbellegi = new HashMap<>();
 
         List<PlanlamaDto.Yerlesen> yerlesenler = new ArrayList<>();
         List<PlanlamaDto.Yerlesmeyen> yerlesmeyenler = new ArrayList<>();
@@ -301,15 +302,12 @@ public class OtomatikPlanlamaService {
     }
 
     private List<Derslik> bolumDersliklari(Ders ders, List<Derslik> kurumDersliklari,
-            Map<Long, List<Derslik>> onbellek) {
-        return onbellek.computeIfAbsent(ders.getBolumId(), bolumId -> {
-            Set<Long> idler = derslikBolumRepository.findByBolumId(bolumId).stream()
+            Map<String, List<Derslik>> onbellek) {
+        return onbellek.computeIfAbsent(ders.getBolumId() + ":" + ders.isSanal(), anahtar -> {
+            Set<Long> idler = derslikBolumRepository.findByBolumId(ders.getBolumId()).stream()
                     .map(DerslikBolum::getDerslikId)
                     .collect(Collectors.toSet());
-            if (idler.isEmpty()) {
-                return kurumDersliklari;
-            }
-            return kurumDersliklari.stream().filter(d -> idler.contains(d.getId())).toList();
+            return DerslikSecici.adaylar(ders.isSanal(), kurumDersliklari, idler);
         });
     }
 

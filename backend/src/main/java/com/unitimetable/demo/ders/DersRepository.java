@@ -2,6 +2,7 @@ package com.unitimetable.demo.ders;
 
 import java.util.Collection;
 import java.util.List;
+import com.unitimetable.demo.ders.DersTuru;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;

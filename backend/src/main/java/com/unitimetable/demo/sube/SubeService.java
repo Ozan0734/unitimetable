@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.unitimetable.demo.blok.BlokService;
 import com.unitimetable.demo.ders.Ders;
 import com.unitimetable.demo.ders.DersRepository;
+import com.unitimetable.demo.ders.DersTuru;
 import com.unitimetable.demo.ortak.KayitBulunamadiException;
 import com.unitimetable.demo.ortak.YetkiKontrol;
 
@@ -63,11 +64,12 @@ public class SubeService {
     public SubeDto.Yanit olustur(SubeDto.Istek istek) {
         Ders ders = dersBul(istek.dersId());
         yetki.bolumeErisim(ders.getBolumId());
+        boolean seminer = ders.getTur() == DersTuru.SEMINER;
         int subeNo = (istek.subeNo() != null) ? istek.subeNo() : sonrakiNo(istek.dersId());
         Sube kaydedilen = repository.saveAndFlush(new Sube(
                 istek.dersId(), istek.ogretimElemaniId(), subeNo, istek.tahminiOgrenci(),
-                varsayilanFalse(istek.sinifCakismaIzni()),
-                varsayilanFalse(istek.derslikCakismaIzni()),
+                varsayilan(istek.sinifCakismaIzni(), seminer),
+                varsayilan(istek.derslikCakismaIzni(), seminer),
                 varsayilanFalse(istek.cokluDerslikIzni())));
         blokService.subeIcinYenile(ders, kaydedilen);
         return yanita(kaydedilen);
@@ -130,6 +132,10 @@ public class SubeService {
 
     private static boolean varsayilanFalse(Boolean deger) {
         return deger != null && deger;
+    }
+
+    private static boolean varsayilan(Boolean deger, boolean varsayilanDeger) {
+        return deger == null ? varsayilanDeger : deger;
     }
 
     private static SubeDto.Yanit yanita(Sube s) {

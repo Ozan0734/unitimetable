@@ -105,6 +105,7 @@ public class CakismaDenetleyici {
         hocaKontrolu(ihlaller, blok, sube, gun, baslangicSlot);
         kapasiteKontrolu(ihlaller, sube, secilenler);
         bolumKontrolu(ihlaller, ders, gun, secilenler);
+        sanalKontrolu(ihlaller, ders, secilenler);
 
         ihlaller.sort(Comparator.comparing(Ihlal::tur));
         return ihlaller;
@@ -290,6 +291,21 @@ public class CakismaDenetleyici {
                                     + " bölümüne ayrılmış. Dersin bölümü: " + bolumAdi(ders.getBolumId()),
                             null));
                 }
+            }
+        }
+    }
+
+    private void sanalKontrolu(List<Ihlal> ihlaller, Ders ders, List<Derslik> secilenler) {
+        for (Derslik derslik : secilenler) {
+            boolean sanalDerslik = derslik.getTur() == DerslikTuru.SANAL;
+            if (ders.isSanal() && !sanalDerslik) {
+                ihlaller.add(new Ihlal(IhlalTuru.UYARI, "SANAL_DERS_FIZIKI_DERSLIK",
+                        "Ders sanal olarak işaretli ama derslik (" + derslik.getAd() + ") sanal sınıf değil",
+                        null));
+            } else if (!ders.isSanal() && sanalDerslik) {
+                ihlaller.add(new Ihlal(IhlalTuru.UYARI, "FIZIKI_DERS_SANAL_DERSLIK",
+                        "Ders sanal olarak işaretli değil ama derslik (" + derslik.getAd() + ") sanal sınıf",
+                        null));
             }
         }
     }

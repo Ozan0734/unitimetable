@@ -108,10 +108,9 @@ public class UygunYerService {
                 .map(DerslikBolum::getDerslikId)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
         List<Derslik> kurumDersliklari = derslikRepository.findByKurumIdOrderByAd(kurumId);
-        List<Derslik> secilenler = bolumunDersliklari.isEmpty()
-                ? kurumDersliklari
-                : kurumDersliklari.stream().filter(d -> bolumunDersliklari.contains(d.getId())).toList();
-        return secilenler.stream().map(Derslik::getId).toList();
+        return DerslikSecici.adaylar(ders.isSanal(), kurumDersliklari, bolumunDersliklari).stream()
+                .map(Derslik::getId)
+                .toList();
     }
 
     private List<Long> secilenDerslikler(List<Long> idler, Long kurumId) {
