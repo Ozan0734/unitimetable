@@ -15,7 +15,10 @@ public class ObsAktarimService {
 
     private static final Locale TR = Locale.forLanguageTag("tr-TR");
 
-    public ObsOnizlemeDto.Yanit onizle(MultipartFile dosya, String donem) {
+    public record Okunan(List<ObsSatiri> satirlar, String donem) {
+    }
+
+    public Okunan oku(MultipartFile dosya, String donem) {
         if (dosya == null || dosya.isEmpty()) {
             throw new GecersizIslemException("Excel dosyası seçilmedi (dosya alanı boş)");
         }
@@ -25,11 +28,15 @@ public class ObsAktarimService {
         }
         String donemKodu = donemKodu(donem);
         try (InputStream akis = dosya.getInputStream()) {
-            List<ObsSatiri> satirlar = ObsDersListesiOkuyucu.oku(akis);
-            return ObsOnizleyici.hazirla(satirlar, donemKodu);
+            return new Okunan(ObsDersListesiOkuyucu.oku(akis), donemKodu);
         } catch (IOException hata) {
             throw new GecersizIslemException("Dosya okunamadı");
         }
+    }
+
+    public ObsOnizlemeDto.Yanit onizle(MultipartFile dosya, String donem) {
+        Okunan okunan = oku(dosya, donem);
+        return ObsOnizleyici.hazirla(okunan.satirlar(), okunan.donem());
     }
 
     private static String donemKodu(String donem) {
