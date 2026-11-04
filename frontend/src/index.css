@@ -1,0 +1,114 @@
+:root {
+  --ana: #2b5fa6;
+  --ana-koyu: #214b84;
+  --yazi: #1f2933;
+  --soluk: #5f6c7b;
+  --arka: #f4f6f8;
+  --sinir: #d5dbe1;
+  --hata: #b42318;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: var(--yazi);
+  background: var(--arka);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.ortala {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+.giris-kutusu {
+  width: min(380px, 92vw);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 28px;
+  background: #fff;
+  border: 1px solid var(--sinir);
+  border-radius: 10px;
+}
+
+.giris-kutusu h1 {
+  margin: 0 0 6px;
+  font-size: 1.25rem;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: var(--soluk);
+}
+
+input {
+  padding: 9px 10px;
+  font-size: 1rem;
+  border: 1px solid var(--sinir);
+  border-radius: 6px;
+}
+
+input:focus {
+  outline: 2px solid var(--ana);
+  border-color: transparent;
+}
+
+button {
+  padding: 9px 14px;
+  font-size: 0.95rem;
+  color: #fff;
+  background: var(--ana);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background: var(--ana-koyu);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+button.ikincil {
+  color: var(--yazi);
+  background: #fff;
+  border: 1px solid var(--sinir);
+}
+
+button.ikincil:hover:not(:disabled) {
+  background: var(--arka);
+}
+
+.hata {
+  margin: 0;
+  color: var(--hata);
+  font-size: 0.9rem;
+}
+
+.ust-cubuk {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 20px;
+  background: #fff;
+  border-bottom: 1px solid var(--sinir);
+}
+
+.bosluk {
+  flex: 1;
+}
+
+.icerik {
+  padding: 24px 20px;
+}
