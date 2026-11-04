@@ -44,6 +44,8 @@ public class GuvenlikAyarlari {
                 .authorizeHttpRequests(istekler -> istekler
                         .requestMatchers(ACIK_ADRESLER).permitAll()
                         .requestMatchers("/api/kullanicilar/**").hasRole("SUPERADMIN")
+                        .requestMatchers("/api/ice-aktarma/derslik-listesi/**")
+                                .hasAnyRole("SUPERADMIN", "FAKULTE")
                         .requestMatchers(HttpMethod.GET, KURUM_YAPISI).authenticated()
                         .requestMatchers(KURUM_YAPISI).hasAnyRole("SUPERADMIN", "FAKULTE")
                         .anyRequest().authenticated())
