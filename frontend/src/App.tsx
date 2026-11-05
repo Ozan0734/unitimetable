@@ -1,4 +1,7 @@
+import { Link, Navigate, Route, Routes } from 'react-router-dom'
 import Giris from './Giris'
+import ProjeDetay from './ProjeDetay'
+import ProjeListesi from './ProjeListesi'
 import { useOturum } from './oturum'
 import type { Rol } from './tipler'
 
@@ -21,7 +24,9 @@ export default function App() {
   return (
     <div className="sayfa">
       <header className="ust-cubuk">
-        <strong>Ders Programı Planlama</strong>
+        <strong>
+          <Link to="/projeler">Ders Programı Planlama</Link>
+        </strong>
         <span className="bosluk" />
         <span>
           {kullanici.adSoyad} · {ROL_ADLARI[kullanici.rol]}
@@ -31,7 +36,12 @@ export default function App() {
         </button>
       </header>
       <main className="icerik">
-        <p>Giriş başarılı. Bir sonraki adımda proje listesi ve haftalık program ızgarası burada olacak.</p>
+        <Routes>
+          <Route path="/" element={<Navigate to="/projeler" replace />} />
+          <Route path="/projeler" element={<ProjeListesi />} />
+          <Route path="/projeler/:projeId" element={<ProjeDetay />} />
+          <Route path="*" element={<p>Sayfa bulunamadı.</p>} />
+        </Routes>
       </main>
     </div>
   )

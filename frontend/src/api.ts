@@ -52,4 +52,12 @@ export async function api<T>(yol: string, secenekler: RequestInit = {}): Promise
   }
 
   return veri as T
+} // <-- api fonksiyonu burada kapanmalı
+
+export function hataMetni(hata: unknown): string {
+  if (hata instanceof ApiHatasi) {
+    const ayrintilar = Object.values(hata.alanlar)
+    return ayrintilar.length > 0 ? `${hata.message}: ${ayrintilar.join('; ')}` : hata.message
+  }
+  return hata instanceof Error ? hata.message : 'Beklenmeyen hata'
 }

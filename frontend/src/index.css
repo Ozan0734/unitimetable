@@ -112,3 +112,135 @@ button.ikincil:hover:not(:disabled) {
 .icerik {
   padding: 24px 20px;
 }
+
+.icerik {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+h2 {
+  margin: 0 0 12px;
+  font-size: 1.15rem;
+}
+
+a {
+  color: var(--ana);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.soluk {
+  color: var(--soluk);
+}
+
+.kart {
+  padding: 16px;
+  margin-bottom: 24px;
+  background: #fff;
+  border: 1px solid var(--sinir);
+  border-radius: 10px;
+}
+
+.form-satiri {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.form-satiri label {
+  flex: 1;
+  min-width: 200px;
+}
+
+select {
+  padding: 9px 10px;
+  font-size: 1rem;
+  background: #fff;
+  border: 1px solid var(--sinir);
+  border-radius: 6px;
+}
+
+table {
+  width: 100%;
+  margin-bottom: 24px;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid var(--sinir);
+}
+
+th,
+td {
+  padding: 10px 12px;
+  font-size: 0.92rem;
+  text-align: left;
+  border-bottom: 1px solid var(--sinir);
+}
+
+th {
+  color: var(--soluk);
+  font-weight: 600;
+  background: var(--arka);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+.rozet {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 0.78rem;
+  color: var(--ana-koyu);
+  background: #e8eef7;
+  border-radius: 999px;
+}
+
+.rozet.yayinda {
+  color: #1b6b3a;
+  background: #e3f4e8;
+}
+
+.rozet.sanal {
+  color: #8a5a00;
+  background: #fff3d6;
+}
+
+.ozet {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.ozet-kutu {
+  flex: 1;
+  min-width: 150px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid var(--sinir);
+  border-radius: 10px;
+}
+
+.ozet-kutu strong {
+  display: block;
+  font-size: 1.6rem;
+}
+
+.ozet-kutu span {
+  color: var(--soluk);
+  font-size: 0.85rem;
+}
+
+button.tehlike {
+  color: var(--hata);
+  background: #fff;
+  border: 1px solid var(--sinir);
+}
+
+button.tehlike:hover:not(:disabled) {
+  background: #fdeceb;
+}
