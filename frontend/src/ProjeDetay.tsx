@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router-dom'
+import ProgramGorunumu from './ProgramGorunumu'
 import { useYukle } from './useYukle'
 import type { Ders, DersTuru, ProgramProjesi, Yerlesim, YerlesmeyenBlok } from './tipler'
 
@@ -31,8 +32,7 @@ export default function ProjeDetay() {
     return <p className="soluk">Yükleniyor…</p>
   }
 
-  const yerlesen = yerlesimler.veri?.length
-  const bekleyen = yerlesmeyenler.veri?.length
+  const dersMap = new Map((dersler.veri ?? []).map((d) => [d.id, d]))
 
   return (
     <>
@@ -50,11 +50,11 @@ export default function ProjeDetay() {
           <span>Ders</span>
         </div>
         <div className="ozet-kutu">
-          <strong>{yerlesen ?? '…'}</strong>
+          <strong>{yerlesimler.veri?.length ?? '…'}</strong>
           <span>Yerleşen blok</span>
         </div>
         <div className="ozet-kutu">
-          <strong>{bekleyen ?? '…'}</strong>
+          <strong>{yerlesmeyenler.veri?.length ?? '…'}</strong>
           <span>Yerleşmeyen blok</span>
         </div>
       </div>
@@ -65,7 +65,43 @@ export default function ProjeDetay() {
         </p>
       )}
 
-      <p className="soluk">Haftalık program ızgarası bir sonraki adımda burada olacak.</p>
+      {dersler.veri && yerlesimler.veri && (
+        <>
+          <h2>Haftalık program</h2>
+          <ProgramGorunumu proje={proje.veri} dersler={dersler.veri} yerlesimler={yerlesimler.veri} />
+        </>
+      )}
+
+      <h2>Yerleşmeyen bloklar</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Ders</th>
+            <th>Şube</th>
+            <th>Blok</th>
+            <th>Süre</th>
+          </tr>
+        </thead>
+        <tbody>
+          {yerlesmeyenler.veri?.length === 0 && (
+            <tr>
+              <td colSpan={4} className="soluk">
+                Yerleşmeyen blok yok.
+              </td>
+            </tr>
+          )}
+          {yerlesmeyenler.veri?.map((b) => (
+            <tr key={b.blokId}>
+              <td>
+                {b.dersKodu} {b.dersAdi}
+              </td>
+              <td>{b.subeNo}</td>
+              <td>{b.siraNo}</td>
+              <td>{b.sure} saat</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       <h2>Dersler</h2>
       <table>
@@ -79,7 +115,7 @@ export default function ProjeDetay() {
           </tr>
         </thead>
         <tbody>
-          {dersler.veri?.length === 0 && (
+          {dersMap.size === 0 && dersler.veri && (
             <tr>
               <td colSpan={5} className="soluk">
                 Bu projede henüz ders yok.

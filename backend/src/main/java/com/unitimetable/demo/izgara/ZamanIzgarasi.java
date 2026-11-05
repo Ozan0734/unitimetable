@@ -1,5 +1,7 @@
 package com.unitimetable.demo.izgara;
 
+import java.time.LocalTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -21,6 +23,15 @@ public class ZamanIzgarasi {
     @Column(name = "gunluk_slot_sayisi", nullable = false)
     private int gunlukSlotSayisi;
 
+    @Column(name = "ders_suresi_dk", nullable = false)
+    private int dersSuresiDk;
+
+    @Column(name = "ara_suresi_dk", nullable = false)
+    private int araSuresiDk;
+
+    @Column(name = "baslangic_saati", nullable = false)
+    private LocalTime baslangicSaati;
+
     protected ZamanIzgarasi() {
     }
 
@@ -38,5 +49,17 @@ public class ZamanIzgarasi {
 
     public int getGunlukSlotSayisi() {
         return gunlukSlotSayisi;
+    }
+
+    public int getDersSuresiDk() {
+        return dersSuresiDk;
+    }
+
+    public int getAraSuresiDk() {
+        return araSuresiDk;
+    }
+
+    public LocalTime getBaslangicSaati() {
+        return baslangicSaati;
     }
 }

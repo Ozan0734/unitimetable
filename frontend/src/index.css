@@ -244,3 +244,117 @@ button.tehlike {
 button.tehlike:hover:not(:disabled) {
   background: #fdeceb;
 }
+.gorunum-secici {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.sekmeler {
+  display: flex;
+  gap: 6px;
+}
+
+.sekme {
+  color: var(--yazi);
+  background: #fff;
+  border: 1px solid var(--sinir);
+}
+
+.sekme:hover:not(:disabled) {
+  background: var(--arka);
+}
+
+.sekme.secili,
+.sekme.secili:hover:not(:disabled) {
+  color: #fff;
+  background: var(--ana);
+  border-color: var(--ana);
+}
+
+.izgara-kap {
+  margin-bottom: 24px;
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid var(--sinir);
+  border-radius: 10px;
+}
+
+.izgara {
+  display: grid;
+  min-width: 760px;
+}
+
+.izgara-baslik {
+  padding: 10px 8px;
+  font-weight: 600;
+  text-align: center;
+  background: var(--arka);
+  border-bottom: 1px solid var(--sinir);
+  border-left: 1px solid var(--sinir);
+}
+
+.izgara-saat {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4px 8px;
+  font-size: 0.78rem;
+  color: var(--soluk);
+  background: var(--arka);
+  border-top: 1px solid var(--sinir);
+}
+
+.izgara-saat strong {
+  font-size: 0.82rem;
+  color: var(--yazi);
+}
+
+.izgara-hucre {
+  border-top: 1px solid var(--sinir);
+  border-left: 1px solid var(--sinir);
+}
+
+.kutu {
+  z-index: 1;
+  justify-self: start;
+  align-self: stretch;
+  margin-top: 2px;
+  margin-bottom: 2px;
+  padding: 5px 7px;
+  overflow: hidden;
+  font-size: 0.76rem;
+  line-height: 1.25;
+  color: var(--yazi);
+  background: color-mix(in srgb, var(--k) 16%, white);
+  border: 1px solid color-mix(in srgb, var(--k) 45%, white);
+  border-left: 4px solid var(--k);
+  border-radius: 6px;
+}
+
+.kutu.hocasiz {
+  background: #fff;
+  border: 1px dashed var(--soluk);
+}
+
+.kutu-baslik {
+  font-weight: 700;
+}
+
+.kutu-alt {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kilit {
+  margin-left: 6px;
+  padding: 0 5px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #8a5a00;
+  background: #fff3d6;
+  border-radius: 4px;
+}

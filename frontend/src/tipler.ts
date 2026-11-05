@@ -66,3 +66,65 @@ export interface YerlesmeyenBlok {
   siraNo: number
   sure: number
 }
+
+export interface ZamanIzgarasi {
+  gunSayisi: number
+  gunlukSlotSayisi: number
+  dersSuresiDk: number
+  araSuresiDk: number
+  baslangicSaati: string
+}
+
+export interface Sube {
+  id: number
+  dersId: number
+  ogretimElemaniId: number | null
+  subeNo: number
+  tahminiOgrenci: number | null
+  sinifCakismaIzni: boolean
+  derslikCakismaIzni: boolean
+  cokluDerslikIzni: boolean
+}
+
+export interface OgretimElemani {
+  id: number
+  bolumId: number
+  adSoyad: string
+  unvan: string | null
+  renk: string | null
+  oncelik: number
+}
+
+export type DerslikTuru = 'SINIF' | 'LABORATUVAR' | 'AMFI' | 'SANAL' | 'SALON'
+
+export interface Derslik {
+  id: number
+  kurumId: number
+  ad: string
+  kapasite: number
+  tur: DerslikTuru
+}
+
+export type Seviye = 'LISANS' | 'YUKSEK_LISANS' | 'DOKTORA'
+export type Dil = 'TR' | 'EN'
+
+export interface AkademikProgram {
+  id: number
+  bolumId: number
+  ad: string
+  seviye: Seviye
+  dil: Dil
+}
+
+export interface Sinif {
+  id: number
+  programId: number
+  ad: string
+  duzey: number
+}
+
+export interface DersSinif {
+  id: number
+  dersId: number
+  sinifId: number
+}
