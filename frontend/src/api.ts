@@ -1,12 +1,14 @@
 export class ApiHatasi extends Error {
   durum: number
   alanlar: Record<string, string>
+  govde: unknown
 
-  constructor(durum: number, mesaj: string, alanlar: Record<string, string> = {}) {
+  constructor(durum: number, mesaj: string, alanlar: Record<string, string> = {}, govde: unknown = null) {
     super(mesaj)
     this.name = 'ApiHatasi'
     this.durum = durum
     this.alanlar = alanlar
+    this.govde = govde
   }
 }
 
@@ -48,11 +50,11 @@ export async function api<T>(yol: string, secenekler: RequestInit = {}): Promise
       cevap.status >= 500
         ? `Sunucuya ulaşılamadı ya da sunucu hata verdi (HTTP ${cevap.status})`
         : `Beklenmeyen hata (HTTP ${cevap.status})`
-    throw new ApiHatasi(cevap.status, govde.mesaj ?? varsayilan, govde.alanlar ?? {})
+    throw new ApiHatasi(cevap.status, govde.mesaj ?? varsayilan, govde.alanlar ?? {}, veri)
   }
 
   return veri as T
-} // <-- api fonksiyonu burada kapanmalı
+}
 
 export function hataMetni(hata: unknown): string {
   if (hata instanceof ApiHatasi) {

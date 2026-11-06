@@ -358,3 +358,132 @@ button.tehlike:hover:not(:disabled) {
   background: #fff3d6;
   border-radius: 4px;
 }
+.hucre-uygun {
+  background: #e3f4e8;
+}
+
+.hucre-uyarili {
+  background: #fff3d6;
+}
+
+.hucre-engelli {
+  background: #fbe4e2;
+}
+
+.hayalet {
+  z-index: 2;
+  margin: 2px;
+  pointer-events: none;
+  border: 2px solid;
+  border-radius: 6px;
+  opacity: 0.85;
+}
+
+.hayalet.hucre-uygun {
+  background: rgba(34, 139, 80, 0.28);
+  border-color: #1b6b3a;
+}
+
+.hayalet.hucre-uyarili {
+  background: rgba(230, 160, 20, 0.3);
+  border-color: #b7791f;
+}
+
+.hayalet.hucre-engelli {
+  background: rgba(200, 50, 40, 0.28);
+  border-color: var(--hata);
+}
+
+.kutu[draggable='true'] {
+  cursor: grab;
+}
+
+.surukle-durum {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  align-items: center;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  font-size: 0.88rem;
+  background: #fff;
+  border: 1px solid var(--sinir);
+  border-radius: 8px;
+}
+
+.surukle-durum .aciklama {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  color: var(--soluk);
+}
+
+.nokta {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--sinir);
+  border-radius: 3px;
+}
+
+.chip-listesi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.chip {
+  padding: 8px 12px;
+  font-size: 0.88rem;
+  cursor: grab;
+  background: #fff;
+  border: 1px dashed var(--soluk);
+  border-radius: 8px;
+}
+
+.chip-alt {
+  color: var(--soluk);
+  font-size: 0.8rem;
+}
+
+.bildirim {
+  position: relative;
+  padding: 10px 40px 10px 14px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  border: 1px solid;
+  border-radius: 8px;
+}
+
+.bildirim.basari {
+  color: #1b6b3a;
+  background: #e3f4e8;
+  border-color: #a8d8b9;
+}
+
+.bildirim.hata {
+  color: var(--hata);
+  background: #fdeceb;
+  border-color: #f2b8b2;
+}
+
+.bildirim.uyari {
+  color: #8a5a00;
+  background: #fff3d6;
+  border-color: #f0d28a;
+}
+
+.bildirim .kapat {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  padding: 0 8px;
+  font-size: 1.1rem;
+  color: inherit;
+  background: transparent;
+}
+
+.bildirim .kapat:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.06);
+}

@@ -128,3 +128,29 @@ export interface DersSinif {
   dersId: number
   sinifId: number
 }
+
+export type IhlalTuru = 'ENGEL' | 'UYARI' | 'BILGI'
+
+export interface Ihlal {
+  tur: IhlalTuru
+  kod: string
+  mesaj: string
+  iliskiliBlokId: number | null
+}
+
+export type YerDurumu = 'UYGUN' | 'UYARILI' | 'ENGELLI'
+
+export interface UygunYer {
+  gun: number
+  baslangicSlot: number
+  bitisSlot: number
+  derslikId: number
+  durum: YerDurumu
+  ihlaller: Ihlal[]
+}
+
+export interface CakismaGovdesi {
+  mesaj: string
+  onayGerekli: boolean
+  ihlaller: Ihlal[]
+}

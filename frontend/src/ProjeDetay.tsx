@@ -32,8 +32,6 @@ export default function ProjeDetay() {
     return <p className="soluk">Yükleniyor…</p>
   }
 
-  const dersMap = new Map((dersler.veri ?? []).map((d) => [d.id, d]))
-
   return (
     <>
       <p>
@@ -65,43 +63,21 @@ export default function ProjeDetay() {
         </p>
       )}
 
-      {dersler.veri && yerlesimler.veri && (
+      {dersler.veri && yerlesimler.veri && yerlesmeyenler.veri && (
         <>
           <h2>Haftalık program</h2>
-          <ProgramGorunumu proje={proje.veri} dersler={dersler.veri} yerlesimler={yerlesimler.veri} />
+          <ProgramGorunumu
+            proje={proje.veri}
+            dersler={dersler.veri}
+            yerlesimler={yerlesimler.veri}
+            yerlesmeyenler={yerlesmeyenler.veri}
+            onDegisti={() => {
+              yerlesimler.yenile()
+              yerlesmeyenler.yenile()
+            }}
+          />
         </>
       )}
-
-      <h2>Yerleşmeyen bloklar</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Ders</th>
-            <th>Şube</th>
-            <th>Blok</th>
-            <th>Süre</th>
-          </tr>
-        </thead>
-        <tbody>
-          {yerlesmeyenler.veri?.length === 0 && (
-            <tr>
-              <td colSpan={4} className="soluk">
-                Yerleşmeyen blok yok.
-              </td>
-            </tr>
-          )}
-          {yerlesmeyenler.veri?.map((b) => (
-            <tr key={b.blokId}>
-              <td>
-                {b.dersKodu} {b.dersAdi}
-              </td>
-              <td>{b.subeNo}</td>
-              <td>{b.siraNo}</td>
-              <td>{b.sure} saat</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
 
       <h2>Dersler</h2>
       <table>
@@ -115,7 +91,7 @@ export default function ProjeDetay() {
           </tr>
         </thead>
         <tbody>
-          {dersMap.size === 0 && dersler.veri && (
+          {dersler.veri?.length === 0 && (
             <tr>
               <td colSpan={5} className="soluk">
                 Bu projede henüz ders yok.
