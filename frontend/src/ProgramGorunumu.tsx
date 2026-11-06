@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { api, ApiHatasi, hataMetni } from './api'
 import { anahtar, baslangicSlotu, enIyiYerler } from './birakma'
 import type { Hucre } from './birakma'
+import { gecmisDurumu, ISLEM_ADLARI, planOzeti } from './gecmis'
 import Izgara from './Izgara'
 import type { Hayalet, Kutu } from './Izgara'
 import YerlesmeyenListesi from './YerlesmeyenListesi'
@@ -15,11 +16,14 @@ import type {
   Ders,
   DersSinif,
   Ihlal,
+  IslemKaydi,
   OgretimElemani,
+  PlanSonucu,
   ProgramProjesi,
   Seviye,
   Sinif,
   Sube,
+  TemizleSonucu,
   UygunYer,
   Yerlesim,
   YerlesmeyenBlok,
@@ -120,10 +124,18 @@ interface Props {
   dersler: Ders[]
   yerlesimler: Yerlesim[]
   yerlesmeyenler: YerlesmeyenBlok[]
+  gecmis: IslemKaydi[]
   onDegisti: () => void
 }
 
-export default function ProgramGorunumu({ proje, dersler, yerlesimler, yerlesmeyenler, onDegisti }: Props) {
+export default function ProgramGorunumu({
+  proje,
+  dersler,
+  yerlesimler,
+  yerlesmeyenler,
+  gecmis,
+  onDegisti,
+}: Props) {
   const izgara = useYukle<ZamanIzgarasi>('/api/zaman-izgarasi')
   const subeler = useYukle<Sube[]>('/api/subeler')
   const hocalar = useYukle<OgretimElemani[]>(`/api/ogretim-elemanlari?bolumId=${proje.bolumId}`)
@@ -138,6 +150,8 @@ export default function ProgramGorunumu({ proje, dersler, yerlesimler, yerlesmey
   const [ustunde, setUstunde] = useState<{ gun: number; slot: number } | null>(null)
   const [bildirim, setBildirim] = useState<Bildirim | null>(null)
   const [mesgul, setMesgul] = useState(false)
+  const [secili, setSecili] = useState<number | null>(null)
+  const [uyariIzni, setUyariIzni] = useState(false)
   const jeton = useRef(0)
 
   const hucreRenkleri = useMemo(() => {
@@ -175,11 +189,22 @@ export default function ProgramGorunumu({ proje, dersler, yerlesimler, yerlesmey
   const derslikAdi = (id: number) => derslikMap.get(id)?.ad ?? `Derslik ${id}`
   const kullanilan = new Set(yerlesimler.flatMap((y) => y.derslikIdler))
 
+  const blokAdlari = new Map<number, string>()
+  for (const y of yerlesimler) {
+    blokAdlari.set(y.blokId, dersMap.get(y.dersId)?.kod ?? `Blok ${y.blokId}`)
+  }
+  for (const b of yerlesmeyenler) {
+    blokAdlari.set(b.blokId, b.dersKodu)
+  }
+  const blokEtiketi = (blokId: number) => blokAdlari.get(blokId) ?? `Blok ${blokId}`
+
+  const { sonGeriAlinabilir, sonYinelenebilir } = gecmisDurumu(gecmis)
+
   const gruplar = secenekGruplari(gorunum, pr, sn, hc, dl, kullanilan)
   const tumIdler = gruplar.flatMap((g) => g.ogeler.map((o) => o.id))
   const etkinSecim = secim !== null && tumIdler.includes(secim) ? secim : (tumIdler[0] ?? null)
 
-  const temizle = () => {
+  const surukleTemizle = () => {
     jeton.current += 1
     setSurukleme(null)
     setHucreler(null)
@@ -210,7 +235,7 @@ export default function ProgramGorunumu({ proje, dersler, yerlesimler, yerlesmey
         .catch((e: unknown) => {
           if (jeton.current === bu) {
             setBildirim({ tur: 'hata', baslik: 'Uygun yerler alınamadı', satirlar: [hataMetni(e)] })
-            temizle()
+            surukleTemizle()
           }
         })
     }, 0)
@@ -285,7 +310,7 @@ export default function ProgramGorunumu({ proje, dersler, yerlesimler, yerlesmey
     }
     const baslangic = baslangicSlotu(h.slot, s.ofset, s.sure, ig.gunlukSlotSayisi)
     const hucre = baslangic === null ? undefined : hucreler.get(anahtar(h.gun, baslangic))
-    temizle()
+    surukleTemizle()
     if (baslangic === null || !hucre) {
       setBildirim({
         tur: 'hata',
@@ -314,6 +339,113 @@ export default function ProgramGorunumu({ proje, dersler, yerlesimler, yerlesmey
     }
     await yerlestir(s, h.gun, baslangic, hucre.derslikId, false)
   }
+
+  const calistir = async (is: () => Promise<Bildirim | null>) => {
+    if (mesgul) {
+      return
+    }
+    setMesgul(true)
+    try {
+      const sonuc = await is()
+      if (sonuc) {
+        setBildirim(sonuc)
+      }
+      onDegisti()
+    } catch (e) {
+      setBildirim({ tur: 'hata', baslik: 'İşlem yapılamadı', satirlar: [hataMetni(e)] })
+    } finally {
+      setMesgul(false)
+    }
+  }
+
+  const geriAl = () =>
+    calistir(async () => {
+      const kayit = await api<IslemKaydi>(`/api/program-projeleri/${proje.id}/geri-al`, { method: 'POST' })
+      return { tur: 'basari', baslik: `${ISLEM_ADLARI[kayit.tur]} geri alındı`, satirlar: [blokEtiketi(kayit.blokId)] }
+    })
+
+  const yinele = () =>
+    calistir(async () => {
+      const kayit = await api<IslemKaydi>(`/api/program-projeleri/${proje.id}/yinele`, { method: 'POST' })
+      return {
+        tur: 'basari',
+        baslik: `${ISLEM_ADLARI[kayit.tur]} yeniden uygulandı`,
+        satirlar: [blokEtiketi(kayit.blokId)],
+      }
+    })
+
+  const planla = () => {
+    if (yerlesmeyenler.length === 0) {
+      return undefined
+    }
+    const metin =
+      `${yerlesmeyenler.length} yerleşmeyen blok otomatik yerleştirilecek. Mevcut yerleşimlere dokunulmaz.\n\n` +
+      'Bu işlem birkaç saniye sürebilir. Devam edilsin mi?'
+    if (!window.confirm(metin)) {
+      return undefined
+    }
+    return calistir(async () => {
+      setBildirim({ tur: 'uyari', baslik: 'Otomatik planlama çalışıyor…', satirlar: ['Lütfen bekleyin.'] })
+      const sonuc = await api<PlanSonucu>(`/api/program-projeleri/${proje.id}/otomatik-planla`, {
+        method: 'POST',
+        body: JSON.stringify({ uyarilaraIzinVer: uyariIzni }),
+      })
+      return planOzeti(sonuc)
+    })
+  }
+
+  const programiTemizle = () => {
+    const kilitsiz = yerlesimler.filter((y) => !y.kilitli).length
+    if (kilitsiz === 0) {
+      setBildirim({
+        tur: 'uyari',
+        baslik: 'Kaldırılacak yerleşim yok',
+        satirlar: ['Tüm yerleşimler kilitli ya da hiç yerleşim yok.'],
+      })
+      return undefined
+    }
+    const metin =
+      `${kilitsiz} kilitsiz yerleşim programdan kaldırılacak, kilitli bloklar yerinde kalacak.\n\n` +
+      'Her blok ayrı işlem olarak kaydedilir ve yalnızca son 50 işlem geri alınabilir. Devam edilsin mi?'
+    if (!window.confirm(metin)) {
+      return undefined
+    }
+    return calistir(async () => {
+      const sonuc = await api<TemizleSonucu>(`/api/program-projeleri/${proje.id}/yerlesimler`, {
+        method: 'DELETE',
+      })
+      setSecili(null)
+      return {
+        tur: 'basari',
+        baslik: `${sonuc.silinen} yerleşim kaldırıldı`,
+        satirlar: sonuc.kilitliKalan > 0 ? [`${sonuc.kilitliKalan} kilitli blok yerinde kaldı`] : [],
+      }
+    })
+  }
+
+  const kilitDegistir = (y: Yerlesim) =>
+    calistir(async () => {
+      await api<Yerlesim>(`/api/bloklar/${y.blokId}/yerlesim/kilit`, {
+        method: 'PUT',
+        body: JSON.stringify({ kilitli: !y.kilitli }),
+      })
+      return {
+        tur: 'basari',
+        baslik: y.kilitli ? 'Kilit kaldırıldı' : 'Blok kilitlendi',
+        satirlar: [blokEtiketi(y.blokId)],
+      }
+    })
+
+  const programdanKaldir = (y: Yerlesim) =>
+    calistir(async () => {
+      await api<void>(`/api/bloklar/${y.blokId}/yerlesim`, { method: 'DELETE' })
+      setSecili(null)
+      return {
+        tur: 'basari',
+        baslik: 'Blok programdan kaldırıldı',
+        satirlar: [`${blokEtiketi(y.blokId)} yerleşmeyen bloklar listesine döndü.`],
+      }
+    })
 
   const kutular: Kutu[] = []
   if (etkinSecim !== null) {
@@ -372,10 +504,35 @@ export default function ProgramGorunumu({ proje, dersler, yerlesimler, yerlesmey
           `${GUN_ADLARI[y.gun - 1]} ${aralikMetni(ig, y.baslangicSlot, y.bitisSlot)}`,
           y.kilitli ? 'Kilitli: taşımak için önce kilidi kaldırın' : '',
           !y.kilitli && y.derslikIdler.length > 1 ? 'Çoklu derslikli blok şimdilik sürüklenemez' : '',
+          'Ayrıntı için tıklayın',
         ]
           .filter((m) => m !== '')
           .join('\n'),
       })
+    }
+  }
+
+  const seciliYerlesim = secili !== null ? yerlesimler.find((y) => y.id === secili) : undefined
+  let panel: {
+    yerlesim: Yerlesim
+    baslik: string
+    dersAdi: string
+    hoca: string
+    derslik: string
+    zaman: string
+  } | null = null
+  if (seciliYerlesim) {
+    const ders = dersMap.get(seciliYerlesim.dersId)
+    const sube = subeMap.get(seciliYerlesim.subeId)
+    const hocaId = sube?.ogretimElemaniId ?? null
+    const hoca = hocaId !== null ? hocaMap.get(hocaId) : undefined
+    panel = {
+      yerlesim: seciliYerlesim,
+      baslik: ders ? `${ders.kod} · Şube ${sube?.subeNo ?? '?'}` : `Blok ${seciliYerlesim.blokId}`,
+      dersAdi: ders?.ad ?? '',
+      hoca: hoca ? hoca.adSoyad : 'Hoca atanmamış',
+      derslik: seciliYerlesim.derslikIdler.map(derslikAdi).join(', '),
+      zaman: `${GUN_ADLARI[seciliYerlesim.gun - 1]} ${aralikMetni(ig, seciliYerlesim.baslangicSlot, seciliYerlesim.bitisSlot)} (${seciliYerlesim.sure} saat)`,
     }
   }
 
@@ -402,6 +559,52 @@ export default function ProgramGorunumu({ proje, dersler, yerlesimler, yerlesmey
 
   return (
     <>
+      <div className="arac-cubugu">
+        <button
+          type="button"
+          className="ikincil"
+          disabled={mesgul || !sonGeriAlinabilir}
+          title={
+            sonGeriAlinabilir
+              ? `Geri al: ${ISLEM_ADLARI[sonGeriAlinabilir.tur]} (${blokEtiketi(sonGeriAlinabilir.blokId)})`
+              : 'Geri alınacak işlem yok'
+          }
+          onClick={() => void geriAl()}
+        >
+          ↶ Geri al
+        </button>
+        <button
+          type="button"
+          className="ikincil"
+          disabled={mesgul || !sonYinelenebilir}
+          title={
+            sonYinelenebilir
+              ? `Yinele: ${ISLEM_ADLARI[sonYinelenebilir.tur]} (${blokEtiketi(sonYinelenebilir.blokId)})`
+              : 'Yinelenecek işlem yok'
+          }
+          onClick={() => void yinele()}
+        >
+          Yinele ↷
+        </button>
+        <span className="ayirici" />
+        <button
+          type="button"
+          disabled={mesgul || yerlesmeyenler.length === 0}
+          title={yerlesmeyenler.length === 0 ? 'Yerleşmeyen blok yok' : 'Yerleşmeyen blokları otomatik yerleştir'}
+          onClick={() => void planla()}
+        >
+          Otomatik planla
+        </button>
+        <label className="onay-kutusu">
+          <input type="checkbox" checked={uyariIzni} onChange={(olay) => setUyariIzni(olay.target.checked)} />
+          Uyarılı yerleşimlere izin ver
+        </label>
+        <span className="bosluk" />
+        <button type="button" className="tehlike" disabled={mesgul} onClick={() => void programiTemizle()}>
+          Kilitsizleri temizle
+        </button>
+      </div>
+
       <div className="gorunum-secici">
         <div className="sekmeler" role="tablist">
           {(Object.keys(GORUNUM_ADLARI) as Gorunum[]).map((g) => (
@@ -414,6 +617,7 @@ export default function ProgramGorunumu({ proje, dersler, yerlesimler, yerlesmey
               onClick={() => {
                 setGorunum(g)
                 setSecim(null)
+                setSecili(null)
               }}
             >
               {GORUNUM_ADLARI[g]}
@@ -424,7 +628,10 @@ export default function ProgramGorunumu({ proje, dersler, yerlesimler, yerlesmey
           <select
             aria-label={GORUNUM_ADLARI[gorunum]}
             value={etkinSecim}
-            onChange={(olay) => setSecim(Number(olay.target.value))}
+            onChange={(olay) => {
+              setSecim(Number(olay.target.value))
+              setSecili(null)
+            }}
           >
             {gruplar.map((grup, i) =>
               grup.etiket === null ? (
@@ -460,6 +667,41 @@ export default function ProgramGorunumu({ proje, dersler, yerlesimler, yerlesmey
         </div>
       )}
 
+      {panel && (
+        <div className="blok-paneli">
+          <div>
+            <strong>{panel.baslik}</strong>
+            {panel.yerlesim.kilitli && <span className="kilit">Kilitli</span>}
+            <div className="soluk">{panel.dersAdi}</div>
+            <div>
+              {panel.zaman} · {panel.derslik}
+            </div>
+            <div>{panel.hoca}</div>
+          </div>
+          <span className="bosluk" />
+          <button
+            type="button"
+            className="ikincil"
+            disabled={mesgul}
+            onClick={() => void kilitDegistir(panel.yerlesim)}
+          >
+            {panel.yerlesim.kilitli ? 'Kilidi kaldır' : 'Kilitle'}
+          </button>
+          <button
+            type="button"
+            className="tehlike"
+            disabled={mesgul || panel.yerlesim.kilitli}
+            title={panel.yerlesim.kilitli ? 'Kilitli bloğu kaldırmak için önce kilidi kaldırın' : ''}
+            onClick={() => void programdanKaldir(panel.yerlesim)}
+          >
+            Programdan kaldır
+          </button>
+          <button type="button" className="ikincil" onClick={() => setSecili(null)}>
+            Kapat
+          </button>
+        </div>
+      )}
+
       {surukleme && (
         <div className="surukle-durum">
           <span className="aciklama">
@@ -479,6 +721,8 @@ export default function ProgramGorunumu({ proje, dersler, yerlesimler, yerlesmey
           suruklenen={surukleme !== null}
           hucreRenkleri={hucreRenkleri}
           hayalet={hayalet}
+          seciliId={secili}
+          kutuTikla={(kutu) => setSecili((onceki) => (onceki === kutu.id ? null : kutu.id))}
           kutuSurukleBasla={(kutu, ofset) =>
             baslat({
               blokId: kutu.blokId,
@@ -488,7 +732,7 @@ export default function ProgramGorunumu({ proje, dersler, yerlesimler, yerlesmey
               ad: kutu.baslik,
             })
           }
-          surukleBitti={temizle}
+          surukleBitti={surukleTemizle}
           ustunde={(h) =>
             setUstunde((onceki) =>
               onceki === h || (onceki && h && onceki.gun === h.gun && onceki.slot === h.slot) ? onceki : h,
@@ -510,7 +754,7 @@ export default function ProgramGorunumu({ proje, dersler, yerlesimler, yerlesmey
             ad: `${b.dersKodu} (Blok ${b.siraNo})`,
           })
         }
-        surukleBitti={temizle}
+        surukleBitti={surukleTemizle}
       />
     </>
   )

@@ -35,6 +35,8 @@ interface Props {
   suruklenen: boolean
   hucreRenkleri: Map<string, YerDurumu> | null
   hayalet: Hayalet | null
+  seciliId: number | null
+  kutuTikla: (kutu: Kutu) => void
   kutuSurukleBasla: (kutu: Kutu, ofset: number) => void
   surukleBitti: () => void
   ustunde: (hucre: { gun: number; slot: number } | null) => void
@@ -56,6 +58,8 @@ export default function Izgara({
   suruklenen,
   hucreRenkleri,
   hayalet,
+  seciliId,
+  kutuTikla,
   kutuSurukleBasla,
   surukleBitti,
   ustunde,
@@ -157,13 +161,17 @@ export default function Izgara({
             marginLeft: `calc(${serit.serit * genislik}% + 2px)`,
             '--k': kutu.renk ?? '',
           } as CSSProperties
+          const siniflar = ['kutu', kutu.renk ? '' : 'hocasiz', seciliId === kutu.id ? 'secili' : '']
+            .filter((s) => s !== '')
+            .join(' ')
           return (
             <div
               key={kutu.id}
-              className={kutu.renk ? 'kutu' : 'kutu hocasiz'}
+              className={siniflar}
               style={stil}
               title={kutu.ipucu}
               draggable={kutu.hareketEdebilir}
+              onClick={() => kutuTikla(kutu)}
               onDragStart={(olay) => {
                 olay.dataTransfer.effectAllowed = 'move'
                 olay.dataTransfer.setData('text/plain', String(kutu.blokId))

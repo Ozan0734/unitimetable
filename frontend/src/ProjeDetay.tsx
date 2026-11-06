@@ -1,7 +1,7 @@
 import { Link, useParams } from 'react-router-dom'
 import ProgramGorunumu from './ProgramGorunumu'
 import { useYukle } from './useYukle'
-import type { Ders, DersTuru, ProgramProjesi, Yerlesim, YerlesmeyenBlok } from './tipler'
+import type { Ders, DersTuru, IslemKaydi, ProgramProjesi, Yerlesim, YerlesmeyenBlok } from './tipler'
 
 const TUR_ADLARI: Record<DersTuru, string> = {
   NORMAL: 'Normal',
@@ -17,6 +17,7 @@ export default function ProjeDetay() {
   const dersler = useYukle<Ders[]>(acik ? `/api/dersler?projeId=${kimlik}` : null)
   const yerlesimler = useYukle<Yerlesim[]>(acik ? `/api/yerlesimler?projeId=${kimlik}` : null)
   const yerlesmeyenler = useYukle<YerlesmeyenBlok[]>(acik ? `/api/yerlesmeyen-bloklar?projeId=${kimlik}` : null)
+  const gecmis = useYukle<IslemKaydi[]>(acik ? `/api/program-projeleri/${kimlik}/gecmis` : null)
 
   if (proje.hata) {
     return (
@@ -31,6 +32,8 @@ export default function ProjeDetay() {
   if (!proje.veri) {
     return <p className="soluk">Yükleniyor…</p>
   }
+
+  const ilkHata = dersler.hata ?? yerlesimler.hata ?? yerlesmeyenler.hata ?? gecmis.hata
 
   return (
     <>
@@ -57,13 +60,13 @@ export default function ProjeDetay() {
         </div>
       </div>
 
-      {(dersler.hata ?? yerlesimler.hata ?? yerlesmeyenler.hata) && (
+      {ilkHata && (
         <p className="hata" role="alert">
-          {dersler.hata ?? yerlesimler.hata ?? yerlesmeyenler.hata}
+          {ilkHata}
         </p>
       )}
 
-      {dersler.veri && yerlesimler.veri && yerlesmeyenler.veri && (
+      {dersler.veri && yerlesimler.veri && yerlesmeyenler.veri && gecmis.veri && (
         <>
           <h2>Haftalık program</h2>
           <ProgramGorunumu
@@ -71,9 +74,11 @@ export default function ProjeDetay() {
             dersler={dersler.veri}
             yerlesimler={yerlesimler.veri}
             yerlesmeyenler={yerlesmeyenler.veri}
+            gecmis={gecmis.veri}
             onDegisti={() => {
               yerlesimler.yenile()
               yerlesmeyenler.yenile()
+              gecmis.yenile()
             }}
           />
         </>

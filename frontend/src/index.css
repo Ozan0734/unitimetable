@@ -487,3 +487,52 @@ button.tehlike:hover:not(:disabled) {
 .bildirim .kapat:hover:not(:disabled) {
   background: rgba(0, 0, 0, 0.06);
 }
+.arac-cubugu {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.ayirici {
+  width: 1px;
+  height: 24px;
+  background: var(--sinir);
+}
+
+.onay-kutusu {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.onay-kutusu input {
+  width: auto;
+  padding: 0;
+}
+
+.blok-paneli {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  background: #fff;
+  border: 1px solid var(--ana);
+  border-radius: 8px;
+}
+
+.kutu {
+  cursor: pointer;
+}
+
+.kutu.secili {
+  outline: 2px solid var(--ana);
+  outline-offset: 1px;
+  box-shadow: 0 2px 8px rgba(43, 95, 166, 0.35);
+}
