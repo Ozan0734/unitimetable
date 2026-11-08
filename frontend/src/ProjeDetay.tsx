@@ -1,15 +1,10 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import DersYonetimi from './DersYonetimi'
 import ObsIceAktar from './ObsIceAktar'
 import ProgramGorunumu from './ProgramGorunumu'
 import { useYukle } from './useYukle'
-import type { Ders, DersTuru, IslemKaydi, ProgramProjesi, Yerlesim, YerlesmeyenBlok } from './tipler'
-
-const TUR_ADLARI: Record<DersTuru, string> = {
-  NORMAL: 'Normal',
-  YERLESIMSIZ: 'Yerleşimsiz',
-  SEMINER: 'Seminer',
-}
+import type { Ders, IslemKaydi, ProgramProjesi, Yerlesim, YerlesmeyenBlok } from './tipler'
 
 export default function ProjeDetay() {
   const { projeId } = useParams()
@@ -37,6 +32,14 @@ export default function ProjeDetay() {
   }
 
   const ilkHata = dersler.hata ?? yerlesimler.hata ?? yerlesmeyenler.hata ?? gecmis.hata
+
+  const tumunuYenile = () => {
+    dersler.yenile()
+    yerlesimler.yenile()
+    yerlesmeyenler.yenile()
+    gecmis.yenile()
+    setSurum((s) => s + 1)
+  }
 
   return (
     <>
@@ -72,16 +75,7 @@ export default function ProjeDetay() {
       <section className="kart">
         <details>
           <summary>OBS ders listesinden ders aktar</summary>
-          <ObsIceAktar
-            proje={proje.veri}
-            onKaydedildi={() => {
-              dersler.yenile()
-              yerlesimler.yenile()
-              yerlesmeyenler.yenile()
-              gecmis.yenile()
-              setSurum((s) => s + 1)
-            }}
-          />
+          <ObsIceAktar proje={proje.veri} onKaydedildi={tumunuYenile} />
         </details>
       </section>
 
@@ -104,43 +98,17 @@ export default function ProjeDetay() {
         </>
       )}
 
-      <h2>Dersler</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Kod</th>
-            <th>Ad</th>
-            <th>Tür</th>
-            <th>Haftalık saat</th>
-            <th>Saat ifadesi</th>
-          </tr>
-        </thead>
-        <tbody>
-          {dersler.veri?.length === 0 && (
-            <tr>
-              <td colSpan={5} className="soluk">
-                Bu projede henüz ders yok.
-              </td>
-            </tr>
-          )}
-          {dersler.veri?.map((d) => (
-            <tr key={d.id}>
-              <td>{d.kod}</td>
-              <td>
-                {d.ad} {d.sanal && <span className="rozet sanal">Sanal</span>}{' '}
-                {d.secmeli && (
-                  <span className="rozet secmeli">
-                    Seçmeli{d.secmeliGrup ? ` · ${d.secmeliGrup}` : ''}
-                  </span>
-                )}
-              </td>
-              <td>{TUR_ADLARI[d.tur]}</td>
-              <td>{d.haftalikSaat ?? '—'}</td>
-              <td>{d.saatIfadesi ?? '—'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {dersler.veri && yerlesimler.veri && (
+        <>
+          <h2>Dersler ve şubeler</h2>
+          <DersYonetimi
+            proje={proje.veri}
+            dersler={dersler.veri}
+            yerlesimler={yerlesimler.veri}
+            onDegisti={tumunuYenile}
+          />
+        </>
+      )}
     </>
   )
 }

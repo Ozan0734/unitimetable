@@ -650,3 +650,78 @@ summary {
 .kaydirma.buyuk {
   max-height: 420px;
 }
+h3 {
+  margin: 20px 0 10px;
+  font-size: 1rem;
+}
+
+.duzenle-paneli {
+  border-color: var(--ana);
+}
+
+.panel-baslik {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.panel-baslik h2 {
+  margin: 0;
+}
+
+.sube-satiri {
+  padding: 12px;
+  margin-bottom: 10px;
+  background: var(--arka);
+  border: 1px solid var(--sinir);
+  border-radius: 8px;
+}
+
+.sube-baslik {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.sube-alanlari {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.sube-alanlari label {
+  flex: 1;
+  min-width: 200px;
+}
+
+.sube-izinleri {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin-bottom: 8px;
+}
+
+.sube-islemleri {
+  display: flex;
+  gap: 8px;
+}
+
+.basari-notu {
+  margin: 8px 0;
+  font-size: 0.9rem;
+  color: #1b6b3a;
+}
+
+.rozet.eksik {
+  margin-left: 6px;
+  color: var(--hata);
+  background: #fdeceb;
+}
+
+tr.secili-satir td {
+  background: #eef3fb;
+}
