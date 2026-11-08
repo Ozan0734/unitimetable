@@ -1,4 +1,5 @@
 import { Link, Navigate, Route, Routes } from 'react-router-dom'
+import Derslikler from './Derslikler'
 import Giris from './Giris'
 import ProjeDetay from './ProjeDetay'
 import ProjeListesi from './ProjeListesi'
@@ -24,9 +25,9 @@ export default function App() {
   return (
     <div className="sayfa">
       <header className="ust-cubuk">
-        <strong>
-          <Link to="/projeler">Ders Programı Planlama</Link>
-        </strong>
+        <strong>Ders Programı Planlama</strong>
+        <Link to="/projeler">Projeler</Link>
+        <Link to="/derslikler">Derslikler</Link>
         <span className="bosluk" />
         <span>
           {kullanici.adSoyad} · {ROL_ADLARI[kullanici.rol]}
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="/" element={<Navigate to="/projeler" replace />} />
           <Route path="/projeler" element={<ProjeListesi />} />
           <Route path="/projeler/:projeId" element={<ProjeDetay />} />
+          <Route path="/derslikler" element={<Derslikler />} />
           <Route path="*" element={<p>Sayfa bulunamadı.</p>} />
         </Routes>
       </main>

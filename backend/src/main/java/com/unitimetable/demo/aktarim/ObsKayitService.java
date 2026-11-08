@@ -158,7 +158,11 @@ public class ObsKayitService {
                 .map(d -> MetinTemizleyici.kod(d.getKod()))
                 .collect(Collectors.toSet());
         Baglam baglam = new Baglam(proje.getBolumId(), programId);
-        Set<String> islenenKodlar = new HashSet<>();
+                Set<String> islenenKodlar = new HashSet<>();
+        Set<String> anaGrupKodlari = satirlar.stream()
+                .filter(ObsKayitService::anaGrupMu)
+                .map(ObsSatiri::kod)
+                .collect(Collectors.toSet());
         List<ObsKayitDto.Atlanan> atlananlar = new ArrayList<>();
 
         int dersSayisi = 0;
@@ -191,8 +195,12 @@ public class ObsKayitService {
                 continue;
             }
 
-            Ders ders = dersRepository.save(new Ders(projeId, proje.getBolumId(), s.kod(), s.ad(),
-                    sinif.tur(), sinif.sanal(), yerlesimsizMi ? null : s.toplamSaat(), ifade));
+            Ders yeniDers = new Ders(projeId, proje.getBolumId(), s.kod(), s.ad(),
+                    sinif.tur(), sinif.sanal(), yerlesimsizMi ? null : s.toplamSaat(), ifade);
+            if (!s.zorunlu()) {
+                yeniDers.secmeliYap(grupKodu(s, anaGrupKodlari));
+            }
+            Ders ders = dersRepository.save(yeniDers);
             dersSinifRepository.save(new DersSinif(ders.getId(), baglam.sinif(s.sinif()).getId()));
 
             OgretimElemani hoca = baglam.hoca(s.hocaMetni());
@@ -274,8 +282,23 @@ public class ObsKayitService {
         }
     }
 
+    /** Seçmeli dersin bağlı olduğu ana grubun kodu. Dosyadaki bir ana gruba bağlı değilse null. */
+    static String grupKodu(ObsSatiri s, Set<String> anaGruplar) {
+        if (s.grup() == null) {
+            return null;
+        }
+        for (String parca : s.grup().split(",")) {
+            String kod = MetinTemizleyici.kod(parca);
+            if (anaGruplar.contains(kod)) {
+                return kod;
+            }
+        }
+        return null;
+    }
+
     private static boolean anaGrupMu(ObsSatiri s) {
-        return MetinTemizleyici.kod(s.grup()).equals(ANA_GRUP);
+
+        return s.grup() != null && s.grup().contains(ANA_GRUP);
     }
 
     private static Set<String> kodlar(List<String> ham) {

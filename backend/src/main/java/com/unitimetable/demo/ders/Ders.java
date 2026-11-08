@@ -36,6 +36,12 @@ public class Ders {
     @Column(nullable = false)
     private boolean sanal;
 
+    @Column(nullable = false)
+    private boolean secmeli;
+
+    @Column(name = "secmeli_grup", length = 30)
+    private String secmeliGrup;
+
     @Column(name = "haftalik_saat")
     private Integer haftalikSaat;
 
@@ -85,6 +91,14 @@ public class Ders {
         return sanal;
     }
 
+    public boolean isSecmeli() {
+        return secmeli;
+    }
+
+    public String getSecmeliGrup() {
+        return secmeliGrup;
+    }
+
     public Integer getHaftalikSaat() {
         return haftalikSaat;
     }
@@ -107,6 +121,12 @@ public class Ders {
 
     public void setSanal(boolean sanal) {
         this.sanal = sanal;
+    }
+
+    /** Dersi seçmeli olarak işaretler. Grup kodu bilinmiyorsa null verilir. */
+    public void secmeliYap(String grup) {
+        this.secmeli = true;
+        this.secmeliGrup = grup;
     }
 
     public void setSaat(Integer haftalikSaat, String saatIfadesi) {

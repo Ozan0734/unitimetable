@@ -196,6 +196,15 @@ public class OtomatikPlanlamaService {
             List<Long> sinifIdler = dersSiniflari.getOrDefault(ders.getId(), List.of());
             List<Derslik> derslikler = sirala(
                     bolumDersliklari(ders, kurumDersliklari, bolumOnbellegi), sube.getTahminiOgrenci());
+            
+            // Eklenen kontrol bloğu
+            if (derslikler.isEmpty()) {
+                yerlesmeyenler.add(yerlesmeyen(blok, ders, sube, ders.isSanal()
+                        ? "Ders sanal ama kurumda sanal sınıf tanımlı değil (Derslikler sayfasından derslik listesini yükleyin)"
+                        : "Bu ders için denenecek derslik yok (bölüme tanımlı derslik bulunamadı)"));
+                continue;
+            }
+            
             List<Aday> adaylar = adaylariUret(izgara, blok, sube, sinifIdler, derslikler, durum);
 
             Aday secilen = null;

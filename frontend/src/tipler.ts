@@ -38,6 +38,8 @@ export interface Ders {
   ad: string
   tur: DersTuru
   sanal: boolean
+  secmeli: boolean
+  secmeliGrup: string | null
   haftalikSaat: number | null
   saatIfadesi: string | null
   bloklar: number[]
@@ -153,4 +155,165 @@ export interface CakismaGovdesi {
   mesaj: string
   onayGerekli: boolean
   ihlaller: Ihlal[]
+}
+export interface BlokDurumu {
+  gun: number
+  baslangicSlot: number
+  kilitli: boolean
+  derslikIdler: number[]
+}
+
+export type IslemTuru = 'YERLESTIR' | 'TASI' | 'KALDIR' | 'KILIT'
+
+export interface IslemKaydi {
+  id: number
+  blokId: number
+  tur: IslemTuru
+  onceki: BlokDurumu | null
+  sonraki: BlokDurumu | null
+  geriAlindi: boolean
+  tarih: string
+}
+
+export interface PlanYerlesen {
+  blokId: number
+  dersKodu: string
+  subeNo: number
+  siraNo: number
+  gun: number
+  baslangicSlot: number
+  bitisSlot: number
+  derslikId: number
+  uyariSayisi: number
+}
+
+export interface PlanYerlesmeyen {
+  blokId: number
+  dersKodu: string
+  subeNo: number
+  siraNo: number
+  sure: number
+  sebep: string
+}
+
+export interface PlanSonucu {
+  yerlesenSayisi: number
+  yerlesmeyenSayisi: number
+  sureDoldu: boolean
+  gecenMs: number
+  yerlesenler: PlanYerlesen[]
+  yerlesmeyenler: PlanYerlesmeyen[]
+}
+
+export interface TemizleSonucu {
+  silinen: number
+  kilitliKalan: number
+}
+export interface ObsDers {
+  satir: number
+  kod: string
+  ad: string
+  zorunlu: boolean
+  sinif: number
+  donem: string
+  teo: number
+  uyg: number
+  lab: number
+  haftalikSaat: number
+  onerilenSaatIfadesi: string
+  kredi: string
+  akts: string
+  hocaUnvan: string
+  hocaAd: string
+  intibak: string
+  onKosul: string
+  etiket: string
+}
+
+export interface ObsSecmeliGrup {
+  satir: number
+  kod: string
+  ad: string
+  sinif: number
+  dersler: ObsDers[]
+}
+
+export interface ObsHoca {
+  unvan: string
+  ad: string
+  dersSayisi: number
+}
+
+export interface ObsUyari {
+  satir: number
+  kod: string
+  mesaj: string
+}
+
+export interface ObsOnizleme {
+  donem: string
+  toplamSatir: number
+  donemSatiri: number
+  digerDonemSatiri: number
+  zorunluSayisi: number
+  secmeliGrupSayisi: number
+  secmeliDersSayisi: number
+  grupsuzSecmeliSayisi: number
+  zorunluDersler: ObsDers[]
+  secmeliGruplar: ObsSecmeliGrup[]
+  grupsuzSecmeliler: ObsDers[]
+  hocalar: ObsHoca[]
+  uyarilar: ObsUyari[]
+}
+
+export interface ObsAtlanan {
+  satir: number
+  kod: string
+  sebep: string
+}
+
+export interface ObsKayitSonucu {
+  olusturulanDers: number
+  olusturulanSube: number
+  olusturulanBlok: number
+  yerlesimsizDers: number
+  sanalDers: number
+  seminerDers: number
+  hocasizSube: number
+  eslesenHoca: number
+  olusturulanHocalar: string[]
+  olusturulanSiniflar: string[]
+  atlananlar: ObsAtlanan[]
+}
+
+export type DerslikKararDurumu = 'EKLENECEK' | 'ZATEN_VAR' | 'PASIF' | 'GECERSIZ'
+
+export interface DerslikKarar {
+  satir: number
+  kod: string
+  ad: string
+  tur: DerslikTuru | null
+  kapasite: number | null
+  dosyadakiKapasite: number | null
+  duzeltildi: boolean
+  durum: DerslikKararDurumu
+  sebep: string | null
+}
+
+export interface DerslikOnizleme {
+  toplamSatir: number
+  eklenecek: number
+  zatenVar: number
+  pasif: number
+  gecersiz: number
+  eklenecekTurler: Record<string, number>
+  dersliklar: DerslikKarar[]
+  uyarilar: string[]
+}
+
+export interface DerslikKayitSonucu {
+  olusturulan: number
+  olusturulanTurler: Record<string, number>
+  atlananlar: DerslikKarar[]
+  uyarilar: string[]
 }

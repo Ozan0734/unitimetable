@@ -34,6 +34,7 @@ public final class DersDto {
     }
 
     public record Yanit(Long id, Long projeId, Long bolumId, String kod, String ad, DersTuru tur,
-            boolean sanal, Integer haftalikSaat, String saatIfadesi, List<Integer> bloklar) {
+            boolean sanal, boolean secmeli, String secmeliGrup, Integer haftalikSaat, String saatIfadesi,
+            List<Integer> bloklar) {
     }
 }

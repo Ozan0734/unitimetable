@@ -18,6 +18,8 @@ export interface Kutu {
   altSatirlar: string[]
   renk: string | null
   kilitli: boolean
+  secmeli: boolean
+  sanal: boolean
   hareketEdebilir: boolean
   ipucu: string
 }
@@ -183,6 +185,8 @@ export default function Izgara({
             >
               <div className="kutu-baslik">
                 {kutu.baslik}
+                {kutu.secmeli && <span className="mini-etiket secmeli">Seçmeli</span>}
+                {kutu.sanal && <span className="mini-etiket sanal">Sanal</span>}
                 {kutu.kilitli && <span className="kilit">Kilitli</span>}
               </div>
               {kutu.altSatirlar.map((satir, i) => (

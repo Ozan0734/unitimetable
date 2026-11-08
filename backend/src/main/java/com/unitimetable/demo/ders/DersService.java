@@ -117,7 +117,8 @@ public class DersService {
         List<Integer> bloklar = (d.getSaatIfadesi() == null)
                 ? List.of()
                 : SaatIfadesi.bloklar(d.getSaatIfadesi());
-        return new DersDto.Yanit(d.getId(), d.getProjeId(), d.getBolumId(), d.getKod(), d.getAd(),
-                d.getTur(), d.isSanal(), d.getHaftalikSaat(), d.getSaatIfadesi(), bloklar);
+           return new DersDto.Yanit(d.getId(), d.getProjeId(), d.getBolumId(), d.getKod(), d.getAd(),
+                d.getTur(), d.isSanal(), d.isSecmeli(), d.getSecmeliGrup(), d.getHaftalikSaat(),
+                d.getSaatIfadesi(), bloklar);
     }
 }

@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import ObsIceAktar from './ObsIceAktar'
 import ProgramGorunumu from './ProgramGorunumu'
 import { useYukle } from './useYukle'
 import type { Ders, DersTuru, IslemKaydi, ProgramProjesi, Yerlesim, YerlesmeyenBlok } from './tipler'
@@ -18,6 +20,7 @@ export default function ProjeDetay() {
   const yerlesimler = useYukle<Yerlesim[]>(acik ? `/api/yerlesimler?projeId=${kimlik}` : null)
   const yerlesmeyenler = useYukle<YerlesmeyenBlok[]>(acik ? `/api/yerlesmeyen-bloklar?projeId=${kimlik}` : null)
   const gecmis = useYukle<IslemKaydi[]>(acik ? `/api/program-projeleri/${kimlik}/gecmis` : null)
+  const [surum, setSurum] = useState(0)
 
   if (proje.hata) {
     return (
@@ -66,10 +69,27 @@ export default function ProjeDetay() {
         </p>
       )}
 
+      <section className="kart">
+        <details>
+          <summary>OBS ders listesinden ders aktar</summary>
+          <ObsIceAktar
+            proje={proje.veri}
+            onKaydedildi={() => {
+              dersler.yenile()
+              yerlesimler.yenile()
+              yerlesmeyenler.yenile()
+              gecmis.yenile()
+              setSurum((s) => s + 1)
+            }}
+          />
+        </details>
+      </section>
+
       {dersler.veri && yerlesimler.veri && yerlesmeyenler.veri && gecmis.veri && (
         <>
           <h2>Haftalık program</h2>
           <ProgramGorunumu
+            key={surum}
             proje={proje.veri}
             dersler={dersler.veri}
             yerlesimler={yerlesimler.veri}
@@ -107,7 +127,12 @@ export default function ProjeDetay() {
             <tr key={d.id}>
               <td>{d.kod}</td>
               <td>
-                {d.ad} {d.sanal && <span className="rozet sanal">Sanal</span>}
+                {d.ad} {d.sanal && <span className="rozet sanal">Sanal</span>}{' '}
+                {d.secmeli && (
+                  <span className="rozet secmeli">
+                    Seçmeli{d.secmeliGrup ? ` · ${d.secmeliGrup}` : ''}
+                  </span>
+                )}
               </td>
               <td>{TUR_ADLARI[d.tur]}</td>
               <td>{d.haftalikSaat ?? '—'}</td>

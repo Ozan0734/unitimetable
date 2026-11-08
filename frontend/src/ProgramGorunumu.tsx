@@ -88,8 +88,14 @@ function secenekGruplari(
   derslikler: Derslik[],
   kullanilanDerslikler: Set<number>,
 ): Grup[] {
+  // Verilerin dizi olduğundan emin olalım (TypeError: not iterable hatasını önlemek için)
+  const guvenliProgramlar = Array.isArray(programlar) ? programlar : []
+  const guvenliSiniflar = Array.isArray(siniflar) ? siniflar : []
+  const guvenliHocalar = Array.isArray(hocalar) ? hocalar : []
+  const guvenliDerslikler = Array.isArray(derslikler) ? derslikler : []
+
   if (gorunum === 'SINIF') {
-    return [...programlar]
+    return [...guvenliProgramlar]
       .sort(
         (a, b) =>
           SEVIYE_SIRASI[a.seviye] - SEVIYE_SIRASI[b.seviye] ||
@@ -98,7 +104,7 @@ function secenekGruplari(
       )
       .map((program) => ({
         etiket: program.ad,
-        ogeler: siniflar
+        ogeler: guvenliSiniflar
           .filter((s) => s.programId === program.id)
           .sort((a, b) => a.duzey - b.duzey)
           .map((s) => ({ id: s.id, ad: s.ad })),
@@ -106,12 +112,12 @@ function secenekGruplari(
       .filter((grup) => grup.ogeler.length > 0)
   }
   if (gorunum === 'HOCA') {
-    const ogeler = [...hocalar]
+    const ogeler = [...guvenliHocalar]
       .sort((a, b) => a.adSoyad.localeCompare(b.adSoyad, 'tr'))
       .map((h) => ({ id: h.id, ad: h.unvan ? `${h.adSoyad} (${h.unvan})` : h.adSoyad }))
     return ogeler.length > 0 ? [{ etiket: null, ogeler }] : []
   }
-  const sirali = [...derslikler].sort((a, b) => a.ad.localeCompare(b.ad, 'tr'))
+  const sirali = [...guvenliDerslikler].sort((a, b) => a.ad.localeCompare(b.ad, 'tr'))
   const oge = (d: Derslik) => ({ id: d.id, ad: `${d.ad} (${d.kapasite} kişi)` })
   return [
     { etiket: 'Bu projede kullanılan', ogeler: sirali.filter((d) => kullanilanDerslikler.has(d.id)).map(oge) },
@@ -136,6 +142,12 @@ export default function ProgramGorunumu({
   gecmis,
   onDegisti,
 }: Props) {
+  // Gelen props verilerinin 0 gibi hatalı bir veri tipi gelmesi ihtimaline karşı dizi olmasını garantiye alıyoruz
+  const guvenliDersler = Array.isArray(dersler) ? dersler : []
+  const guvenliYerlesimler = Array.isArray(yerlesimler) ? yerlesimler : []
+  const guvenliYerlesmeyenler = Array.isArray(yerlesmeyenler) ? yerlesmeyenler : []
+  const guvenliGecmis = Array.isArray(gecmis) ? gecmis : []
+
   const izgara = useYukle<ZamanIzgarasi>('/api/zaman-izgarasi')
   const subeler = useYukle<Sube[]>('/api/subeler')
   const hocalar = useYukle<OgretimElemani[]>(`/api/ogretim-elemanlari?bolumId=${proje.bolumId}`)
@@ -146,7 +158,10 @@ export default function ProgramGorunumu({
   const [gorunum, setGorunum] = useState<Gorunum>('SINIF')
   const [secim, setSecim] = useState<number | null>(null)
   const [surukleme, setSurukleme] = useState<Surukleme | null>(null)
-  const [hucreler, setHucreler] = useState<Map<string, Hucre> | null>(null)
+  
+  // useState syntax hatası giderildi ve tipi düzeltildi
+    const [hucreler, setHucreler] = useState<Map<string, Hucre> | null>(null)
+  
   const [ustunde, setUstunde] = useState<{ gun: number; slot: number } | null>(null)
   const [bildirim, setBildirim] = useState<Bildirim | null>(null)
   const [mesgul, setMesgul] = useState(false)
@@ -155,7 +170,7 @@ export default function ProgramGorunumu({
   const jeton = useRef(0)
 
   const hucreRenkleri = useMemo(() => {
-    if (!hucreler) {
+    if (!hucreler || !(hucreler instanceof Map)) {
       return null
     }
     return new Map([...hucreler].map(([k, h]) => [k, h.durum] as const))
@@ -164,6 +179,7 @@ export default function ProgramGorunumu({
   const hata = [izgara, subeler, hocalar, derslikler, programlar, siniflar, dersSiniflari]
     .map((y) => y.hata)
     .find((h) => h !== undefined)
+  
   if (hata) {
     return (
       <p className="hata" role="alert">
@@ -171,6 +187,7 @@ export default function ProgramGorunumu({
       </p>
     )
   }
+  
   const { veri: ig } = izgara
   const { veri: sb } = subeler
   const { veri: hc } = hocalar
@@ -178,27 +195,28 @@ export default function ProgramGorunumu({
   const { veri: pr } = programlar
   const { veri: sn } = siniflar
   const { veri: ds } = dersSiniflari
+  
   if (!ig || !sb || !hc || !dl || !pr || !sn || !ds) {
     return <p className="soluk">Yükleniyor…</p>
   }
 
-  const dersMap = new Map(dersler.map((d) => [d.id, d]))
-  const subeMap = new Map(sb.map((s) => [s.id, s]))
-  const hocaMap = new Map(hc.map((h) => [h.id, h]))
-  const derslikMap = new Map(dl.map((d) => [d.id, d]))
+  const dersMap = new Map(guvenliDersler.map((d) => [d.id, d]))
+  const subeMap = new Map(Array.isArray(sb) ? sb.map((s) => [s.id, s]) : [])
+  const hocaMap = new Map(Array.isArray(hc) ? hc.map((h) => [h.id, h]) : [])
+  const derslikMap = new Map(Array.isArray(dl) ? dl.map((d) => [d.id, d]) : [])
   const derslikAdi = (id: number) => derslikMap.get(id)?.ad ?? `Derslik ${id}`
-  const kullanilan = new Set(yerlesimler.flatMap((y) => y.derslikIdler))
+  const kullanilan = new Set(guvenliYerlesimler.flatMap((y) => y.derslikIdler || []))
 
   const blokAdlari = new Map<number, string>()
-  for (const y of yerlesimler) {
+  for (const y of guvenliYerlesimler) {
     blokAdlari.set(y.blokId, dersMap.get(y.dersId)?.kod ?? `Blok ${y.blokId}`)
   }
-  for (const b of yerlesmeyenler) {
+  for (const b of guvenliYerlesmeyenler) {
     blokAdlari.set(b.blokId, b.dersKodu)
   }
   const blokEtiketi = (blokId: number) => blokAdlari.get(blokId) ?? `Blok ${blokId}`
 
-  const { sonGeriAlinabilir, sonYinelenebilir } = gecmisDurumu(gecmis)
+  const { sonGeriAlinabilir, sonYinelenebilir } = gecmisDurumu(guvenliGecmis)
 
   const gruplar = secenekGruplari(gorunum, pr, sn, hc, dl, kullanilan)
   const tumIdler = gruplar.flatMap((g) => g.ogeler.map((o) => o.id))
@@ -375,11 +393,11 @@ export default function ProgramGorunumu({
     })
 
   const planla = () => {
-    if (yerlesmeyenler.length === 0) {
+    if (guvenliYerlesmeyenler.length === 0) {
       return undefined
     }
     const metin =
-      `${yerlesmeyenler.length} yerleşmeyen blok otomatik yerleştirilecek. Mevcut yerleşimlere dokunulmaz.\n\n` +
+      `${guvenliYerlesmeyenler.length} yerleşmeyen blok otomatik yerleştirilecek. Mevcut yerleşimlere dokunulmaz.\n\n` +
       'Bu işlem birkaç saniye sürebilir. Devam edilsin mi?'
     if (!window.confirm(metin)) {
       return undefined
@@ -395,7 +413,7 @@ export default function ProgramGorunumu({
   }
 
   const programiTemizle = () => {
-    const kilitsiz = yerlesimler.filter((y) => !y.kilitli).length
+    const kilitsiz = guvenliYerlesimler.filter((y) => !y.kilitli).length
     if (kilitsiz === 0) {
       setBildirim({
         tur: 'uyari',
@@ -449,8 +467,9 @@ export default function ProgramGorunumu({
 
   const kutular: Kutu[] = []
   if (etkinSecim !== null) {
-    const sinifDersleri = new Set(ds.filter((x) => x.sinifId === etkinSecim).map((x) => x.dersId))
-    for (const y of yerlesimler) {
+    const guvenliDersSiniflari = Array.isArray(ds) ? ds : []
+    const sinifDersleri = new Set(guvenliDersSiniflari.filter((x) => x.sinifId === etkinSecim).map((x) => x.dersId))
+    for (const y of guvenliYerlesimler) {
       const ders = dersMap.get(y.dersId)
       const sube = subeMap.get(y.subeId)
       if (!ders || !sube) {
@@ -462,14 +481,14 @@ export default function ProgramGorunumu({
       if (gorunum === 'HOCA' && sube.ogretimElemaniId !== etkinSecim) {
         continue
       }
-      if (gorunum === 'DERSLIK' && !y.derslikIdler.includes(etkinSecim)) {
+      if (gorunum === 'DERSLIK' && (!y.derslikIdler || !y.derslikIdler.includes(etkinSecim))) {
         continue
       }
       if (y.gun > ig.gunSayisi || y.bitisSlot > ig.gunlukSlotSayisi) {
         continue
       }
       const hoca = sube.ogretimElemaniId !== null ? hocaMap.get(sube.ogretimElemaniId) : undefined
-      const derslikAdlari = y.derslikIdler.map(derslikAdi).join(', ')
+      const derslikAdlari = y.derslikIdler ? y.derslikIdler.map(derslikAdi).join(', ') : ''
       const hocaMetni = hoca ? hoca.adSoyad : 'Hoca atanmamış'
       const altSatirlar = [ders.ad]
       if (gorunum !== 'HOCA') {
@@ -482,12 +501,12 @@ export default function ProgramGorunumu({
         sube.ogretimElemaniId === null
           ? null
           : (hoca?.renk ?? PALET[sube.ogretimElemaniId % PALET.length])
-      const hareketEdebilir = !y.kilitli && y.derslikIdler.length === 1
+      const hareketEdebilir = !y.kilitli && (y.derslikIdler && y.derslikIdler.length === 1)
       kutular.push({
         id: y.id,
         blokId: y.blokId,
         sure: y.sure,
-        derslikIdler: y.derslikIdler,
+        derslikIdler: y.derslikIdler || [],
         gun: y.gun,
         baslangic: y.baslangicSlot,
         bitis: y.bitisSlot,
@@ -495,6 +514,8 @@ export default function ProgramGorunumu({
         altSatirlar,
         renk,
         kilitli: y.kilitli,
+        secmeli: ders.secmeli,
+        sanal: ders.sanal,
         hareketEdebilir,
         ipucu: [
           `${ders.kod} ${ders.ad}`,
@@ -503,7 +524,7 @@ export default function ProgramGorunumu({
           derslikAdlari,
           `${GUN_ADLARI[y.gun - 1]} ${aralikMetni(ig, y.baslangicSlot, y.bitisSlot)}`,
           y.kilitli ? 'Kilitli: taşımak için önce kilidi kaldırın' : '',
-          !y.kilitli && y.derslikIdler.length > 1 ? 'Çoklu derslikli blok şimdilik sürüklenemez' : '',
+          !y.kilitli && y.derslikIdler && y.derslikIdler.length > 1 ? 'Çoklu derslikli blok şimdilik sürüklenemez' : '',
           'Ayrıntı için tıklayın',
         ]
           .filter((m) => m !== '')
@@ -512,7 +533,7 @@ export default function ProgramGorunumu({
     }
   }
 
-  const seciliYerlesim = secili !== null ? yerlesimler.find((y) => y.id === secili) : undefined
+  const seciliYerlesim = secili !== null ? guvenliYerlesimler.find((y) => y.id === secili) : undefined
   let panel: {
     yerlesim: Yerlesim
     baslik: string
@@ -531,7 +552,7 @@ export default function ProgramGorunumu({
       baslik: ders ? `${ders.kod} · Şube ${sube?.subeNo ?? '?'}` : `Blok ${seciliYerlesim.blokId}`,
       dersAdi: ders?.ad ?? '',
       hoca: hoca ? hoca.adSoyad : 'Hoca atanmamış',
-      derslik: seciliYerlesim.derslikIdler.map(derslikAdi).join(', '),
+      derslik: seciliYerlesim.derslikIdler ? seciliYerlesim.derslikIdler.map(derslikAdi).join(', ') : '',
       zaman: `${GUN_ADLARI[seciliYerlesim.gun - 1]} ${aralikMetni(ig, seciliYerlesim.baslangicSlot, seciliYerlesim.bitisSlot)} (${seciliYerlesim.sure} saat)`,
     }
   }
@@ -548,7 +569,10 @@ export default function ProgramGorunumu({
       if (bas === null) {
         durumMetni = 'Blok buraya sığmıyor'
       } else if (!hucre) {
-        durumMetni = 'Bu saatte denenecek derslik bulunamadı'
+        durumMetni =
+          hucreler.size === 0
+            ? 'Bu ders için denenecek derslik yok. Sanal dersler için sanal sınıf, diğerleri için bölüme tanımlı derslik gerekir (Derslikler sayfası).'
+            : 'Bu saatte denenecek derslik bulunamadı'
       } else {
         hayalet = { gun: ustunde.gun, baslangic: bas, sure: surukleme.sure, durum: hucre.durum }
         const mesajlar = ihlalMetinleri(hucre.ihlaller, ['ENGEL', 'UYARI'])
@@ -589,8 +613,8 @@ export default function ProgramGorunumu({
         <span className="ayirici" />
         <button
           type="button"
-          disabled={mesgul || yerlesmeyenler.length === 0}
-          title={yerlesmeyenler.length === 0 ? 'Yerleşmeyen blok yok' : 'Yerleşmeyen blokları otomatik yerleştir'}
+          disabled={mesgul || guvenliYerlesmeyenler.length === 0}
+          title={guvenliYerlesmeyenler.length === 0 ? 'Yerleşmeyen blok yok' : 'Yerleşmeyen blokları otomatik yerleştir'}
           onClick={() => void planla()}
         >
           Otomatik planla
@@ -744,7 +768,7 @@ export default function ProgramGorunumu({
 
       <h2>Yerleşmeyen bloklar</h2>
       <YerlesmeyenListesi
-        bloklar={yerlesmeyenler}
+        bloklar={guvenliYerlesmeyenler}
         surukleBasla={(b) =>
           baslat({
             blokId: b.blokId,
