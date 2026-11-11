@@ -1,0 +1,146 @@
+.renk-nokta {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 50%;
+}
+
+.renk-satiri {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.renk-secimi {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+input[type='color'] {
+  width: 44px;
+  height: 36px;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.kucuk-sayi {
+  width: 70px;
+}
+
+.musaitlik-kap {
+  margin-bottom: 8px;
+  overflow-x: auto;
+}
+
+table.musaitlik {
+  width: auto;
+  min-width: 520px;
+  margin-bottom: 0;
+  table-layout: fixed;
+}
+
+.musaitlik th,
+.musaitlik td {
+  padding: 0;
+  text-align: center;
+}
+
+.musaitlik th:first-child {
+  width: 110px;
+}
+
+.m-baslik {
+  width: 100%;
+  padding: 8px 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--yazi);
+  background: var(--arka);
+  border: none;
+  border-radius: 0;
+}
+
+.m-baslik:hover:not(:disabled) {
+  background: #e4e9ef;
+}
+
+.m-saat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-weight: 400;
+}
+
+.m-saat span {
+  font-size: 0.72rem;
+  color: var(--soluk);
+}
+
+.m-hucre {
+  width: 100%;
+  height: 40px;
+  font-size: 1rem;
+  color: var(--yazi);
+  background: #fff;
+  border: none;
+  border-radius: 0;
+}
+
+.m-hucre:hover:not(:disabled) {
+  background: #eef3fb;
+}
+
+.m-hucre.degil {
+  color: var(--hata);
+  background: #fbe4e2;
+}
+
+.m-hucre.degil:hover:not(:disabled) {
+  background: #f6d2cf;
+}
+
+.m-hucre.tercih {
+  color: #1b6b3a;
+  background: #e3f4e8;
+}
+
+.m-hucre.tercih:hover:not(:disabled) {
+  background: #d3ecda;
+}
+
+.tercih-bolumu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--sinir);
+}
+
+.gun-cipleri {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.gun-cipi {
+  color: var(--yazi);
+  background: #fff;
+  border: 1px solid var(--sinir);
+}
+
+.gun-cipi:hover:not(:disabled) {
+  background: var(--arka);
+}
+
+.gun-cipi[aria-pressed='true'],
+.gun-cipi[aria-pressed='true']:hover:not(:disabled) {
+  color: #fff;
+  background: var(--ana);
+  border-color: var(--ana);
+}

@@ -50,6 +50,11 @@ export default function ProjeDetay() {
       <p className="soluk">
         {proje.veri.donem} · {proje.veri.durum === 'YAYINDA' ? 'Yayında' : 'Taslak'}
       </p>
+      <p>
+        <Link to={`/projeler/${proje.veri.id}/cikti`} className="buton-baglanti">
+          Çıktı al (yazdır / PDF)
+        </Link>
+      </p>
 
       <div className="ozet">
         <div className="ozet-kutu">
