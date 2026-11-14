@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -36,6 +37,8 @@ import com.unitimetable.demo.ogretimelemani.MusaitlikDurumu;
 import com.unitimetable.demo.ogretimelemani.OgretimElemani;
 import com.unitimetable.demo.ogretimelemani.OgretimElemaniRepository;
 import com.unitimetable.demo.ogretimelemani.TercihKatiligi;
+import com.unitimetable.demo.proje.ProgramProjesi;
+import com.unitimetable.demo.proje.ProgramProjesiRepository;
 import com.unitimetable.demo.sube.Sube;
 import com.unitimetable.demo.sube.SubeRepository;
 
@@ -59,6 +62,7 @@ public class CakismaDenetleyici {
     private final HocaGunTercihiRepository gunTercihiRepository;
     private final OgretimElemaniRepository hocaRepository;
     private final BolumRepository bolumRepository;
+    private final ProgramProjesiRepository projeRepository;
 
     public CakismaDenetleyici(YerlesimRepository yerlesimRepository,
             YerlesimDerslikRepository yerlesimDerslikRepository,
@@ -72,7 +76,8 @@ public class CakismaDenetleyici {
             HocaMusaitlikRepository musaitlikRepository,
             HocaGunTercihiRepository gunTercihiRepository,
             OgretimElemaniRepository hocaRepository,
-            BolumRepository bolumRepository) {
+            BolumRepository bolumRepository,
+            ProgramProjesiRepository projeRepository) {
         this.yerlesimRepository = yerlesimRepository;
         this.yerlesimDerslikRepository = yerlesimDerslikRepository;
         this.blokRepository = blokRepository;
@@ -86,6 +91,7 @@ public class CakismaDenetleyici {
         this.gunTercihiRepository = gunTercihiRepository;
         this.hocaRepository = hocaRepository;
         this.bolumRepository = bolumRepository;
+        this.projeRepository = projeRepository;
     }
 
     /**
@@ -96,12 +102,24 @@ public class CakismaDenetleyici {
         return bas1 <= bas2 + sure2 - 1 && bas2 <= bas1 + sure1 - 1;
     }
 
+    /**
+     * Tek bir yerleştirme için denetim. Diğer bölümlerin yerleşimleri bu çağrıda okunur. Çok sayıda
+     * adayı peş peşe denetleyecek olanlar (uygun yerler, otomatik planlama) {@link #digerBolumBaglami}
+     * ile bağlamı bir kez kurup diğer metodu kullanmalıdır.
+     */
     public List<Ihlal> kontrolEt(DersBlogu blok, Sube sube, Ders ders, int gun, int baslangicSlot,
             List<Long> derslikIdler) {
+        return kontrolEt(blok, sube, ders, gun, baslangicSlot, derslikIdler,
+                digerBolumBaglami(ders.getProjeId()));
+    }
+
+    public List<Ihlal> kontrolEt(DersBlogu blok, Sube sube, Ders ders, int gun, int baslangicSlot,
+            List<Long> derslikIdler, DigerBolumBaglami digerBolum) {
         List<Ihlal> ihlaller = new ArrayList<>();
         List<Derslik> secilenler = derslikRepository.findAllById(derslikIdler);
 
         cakismalariKontrolEt(ihlaller, blok, sube, ders, gun, baslangicSlot, secilenler);
+        bolumlerArasiKontrolu(ihlaller, blok, sube, gun, baslangicSlot, secilenler, digerBolum);
         hocaKontrolu(ihlaller, blok, sube, gun, baslangicSlot);
         kapasiteKontrolu(ihlaller, sube, secilenler);
         bolumKontrolu(ihlaller, ders, gun, secilenler);
@@ -109,6 +127,95 @@ public class CakismaDenetleyici {
 
         ihlaller.sort(Comparator.comparing(Ihlal::tur));
         return ihlaller;
+    }
+
+    public DigerBolumBaglami digerBolumBaglami(Long projeId) {
+        return projeRepository.findById(projeId)
+                .map(proje -> digerBolumBaglami(proje))
+                .orElse(DigerBolumBaglami.bos());
+    }
+
+    /**
+     * Aynı kurumda, aynı dönemde, başka bölümlere ait projelerin yerleşik blokları. Aynı bölümün başka
+     * projeleri (alternatif programlar) buraya girmez.
+     */
+    public DigerBolumBaglami digerBolumBaglami(ProgramProjesi proje) {
+        String donem = BolumlerArasiKurallar.donemAnahtari(proje.getDonem());
+        List<ProgramProjesi> digerProjeler = projeRepository.findByKurumId(proje.getKurumId()).stream()
+                .filter(p -> !p.getBolumId().equals(proje.getBolumId()))
+                .filter(p -> BolumlerArasiKurallar.donemAnahtari(p.getDonem()).equals(donem))
+                .toList();
+        if (digerProjeler.isEmpty()) {
+            return DigerBolumBaglami.bos();
+        }
+
+        List<Yerlesim> yerlesimler = new ArrayList<>();
+        for (ProgramProjesi diger : digerProjeler) {
+            yerlesimler.addAll(yerlesimRepository.findByProjeId(diger.getId()));
+        }
+        if (yerlesimler.isEmpty()) {
+            return DigerBolumBaglami.bos();
+        }
+
+        Map<Long, DersBlogu> bloklar = blokRepository
+                .findAllById(yerlesimler.stream().map(Yerlesim::getBlokId).collect(Collectors.toSet())).stream()
+                .collect(Collectors.toMap(DersBlogu::getId, Function.identity()));
+        Map<Long, Sube> subeler = subeRepository
+                .findAllById(bloklar.values().stream().map(DersBlogu::getSubeId).collect(Collectors.toSet()))
+                .stream().collect(Collectors.toMap(Sube::getId, Function.identity()));
+        Map<Long, Ders> dersler = dersRepository
+                .findAllById(subeler.values().stream().map(Sube::getDersId).collect(Collectors.toSet()))
+                .stream().collect(Collectors.toMap(Ders::getId, Function.identity()));
+        Map<Long, Set<Long>> derslikler = yerlesimDerslikRepository
+                .findByYerlesimIdIn(yerlesimler.stream().map(Yerlesim::getId).toList()).stream()
+                .collect(Collectors.groupingBy(YerlesimDerslik::getYerlesimId,
+                        Collectors.mapping(YerlesimDerslik::getDerslikId, Collectors.toSet())));
+        Set<Long> hocaIdleri = subeler.values().stream()
+                .map(Sube::getOgretimElemaniId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, OgretimElemani> hocalar = hocaRepository.findAllById(hocaIdleri).stream()
+                .collect(Collectors.toMap(OgretimElemani::getId, Function.identity()));
+        Map<Long, Bolum> bolumler = bolumRepository
+                .findAllById(dersler.values().stream().map(Ders::getBolumId).collect(Collectors.toSet()))
+                .stream().collect(Collectors.toMap(Bolum::getId, Function.identity()));
+
+        List<DigerBolumBaglami.DigerBlok> liste = new ArrayList<>();
+        for (Yerlesim y : yerlesimler) {
+            DersBlogu blok = bloklar.get(y.getBlokId());
+            Sube sube = blok == null ? null : subeler.get(blok.getSubeId());
+            Ders ders = sube == null ? null : dersler.get(sube.getDersId());
+            if (ders == null) {
+                continue;
+            }
+            OgretimElemani hoca = sube.getOgretimElemaniId() == null
+                    ? null
+                    : hocalar.get(sube.getOgretimElemaniId());
+            Bolum bolum = bolumler.get(ders.getBolumId());
+            liste.add(new DigerBolumBaglami.DigerBlok(y.getGun(), y.getBaslangicSlot(), blok.getSure(),
+                    bolum == null ? "Başka bölüm" : bolum.getAd(), ders.getKod(), sube.getSubeNo(),
+                    hoca == null ? null : BolumlerArasiKurallar.hocaAnahtari(hoca.getAdSoyad()),
+                    derslikler.getOrDefault(y.getId(), Set.of()), sube.isDerslikCakismaIzni()));
+        }
+        return new DigerBolumBaglami(liste);
+    }
+
+    private void bolumlerArasiKontrolu(List<Ihlal> ihlaller, DersBlogu blok, Sube sube, int gun,
+            int baslangicSlot, List<Derslik> secilenler, DigerBolumBaglami digerBolum) {
+        if (digerBolum.gununBloklari(gun).isEmpty()) {
+            return;
+        }
+        String hocaAdi = null;
+        if (sube.getOgretimElemaniId() != null) {
+            hocaAdi = hocaRepository.findById(sube.getOgretimElemaniId())
+                    .map(OgretimElemani::getAdSoyad)
+                    .orElse(null);
+        }
+        List<BolumlerArasiKurallar.SecilenDerslik> derslikler = secilenler.stream()
+                .map(d -> new BolumlerArasiKurallar.SecilenDerslik(d.getId(), d.getAd()))
+                .toList();
+        ihlaller.addAll(BolumlerArasiKurallar.degerlendir(digerBolum, gun, baslangicSlot, blok.getSure(),
+                BolumlerArasiKurallar.hocaAnahtari(hocaAdi), hocaAdi, sube.isDerslikCakismaIzni(), derslikler));
     }
 
     private void cakismalariKontrolEt(List<Ihlal> ihlaller, DersBlogu blok, Sube sube, Ders ders,

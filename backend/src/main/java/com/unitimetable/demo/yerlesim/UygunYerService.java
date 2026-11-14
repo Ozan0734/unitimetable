@@ -75,13 +75,14 @@ public class UygunYerService {
                 ? varsayilanDerslikler(ders, proje.getKurumId())
                 : secilenDerslikler(derslikIdler, proje.getKurumId());
 
+        DigerBolumBaglami digerBolum = denetleyici.digerBolumBaglami(proje);
         List<UygunYerDto.Yer> sonuc = new ArrayList<>();
         int enGecBaslangic = izgara.getGunlukSlotSayisi() - blok.getSure() + 1;
         for (int gun = 1; gun <= izgara.getGunSayisi(); gun++) {
             for (int baslangic = 1; baslangic <= enGecBaslangic; baslangic++) {
                 for (Long derslikId : adaylar) {
                     List<Ihlal> ihlaller = denetleyici.kontrolEt(blok, sube, ders, gun, baslangic,
-                            List.of(derslikId));
+                            List.of(derslikId), digerBolum);
                     UygunYerDto.Durum durum = durum(ihlaller);
                     if (filtre == null || filtre == durum) {
                         sonuc.add(new UygunYerDto.Yer(gun, baslangic, baslangic + blok.getSure() - 1,

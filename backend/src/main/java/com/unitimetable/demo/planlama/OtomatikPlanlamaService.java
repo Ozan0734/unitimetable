@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.unitimetable.demo.yerlesim.DerslikSecici;
 
 import com.unitimetable.demo.blok.DersBlogu;
 import com.unitimetable.demo.blok.DersBloguRepository;
@@ -34,6 +33,8 @@ import com.unitimetable.demo.sube.Sube;
 import com.unitimetable.demo.sube.SubeRepository;
 import com.unitimetable.demo.yerlesim.BlokDurumu;
 import com.unitimetable.demo.yerlesim.CakismaDenetleyici;
+import com.unitimetable.demo.yerlesim.DerslikSecici;
+import com.unitimetable.demo.yerlesim.DigerBolumBaglami;
 import com.unitimetable.demo.yerlesim.Ihlal;
 import com.unitimetable.demo.yerlesim.IhlalTuru;
 import com.unitimetable.demo.yerlesim.IslemGecmisiService;
@@ -178,7 +179,10 @@ public class OtomatikPlanlamaService {
                 .thenComparingLong(DersBlogu::getId));
 
         List<Derslik> kurumDersliklari = derslikRepository.findByKurumIdOrderByAd(proje.getKurumId());
-         Map<String, List<Derslik>> bolumOnbellegi = new HashMap<>();
+        Map<String, List<Derslik>> bolumOnbellegi = new HashMap<>();
+
+        // Diğer bölümlerin yerleşimleri planlama boyunca değişmez, bir kez okunur.
+        DigerBolumBaglami digerBolum = denetleyici.digerBolumBaglami(proje);
 
         List<PlanlamaDto.Yerlesen> yerlesenler = new ArrayList<>();
         List<PlanlamaDto.Yerlesmeyen> yerlesmeyenler = new ArrayList<>();
@@ -196,15 +200,12 @@ public class OtomatikPlanlamaService {
             List<Long> sinifIdler = dersSiniflari.getOrDefault(ders.getId(), List.of());
             List<Derslik> derslikler = sirala(
                     bolumDersliklari(ders, kurumDersliklari, bolumOnbellegi), sube.getTahminiOgrenci());
-            
-            // Eklenen kontrol bloğu
             if (derslikler.isEmpty()) {
                 yerlesmeyenler.add(yerlesmeyen(blok, ders, sube, ders.isSanal()
                         ? "Ders sanal ama kurumda sanal sınıf tanımlı değil (Derslikler sayfasından derslik listesini yükleyin)"
                         : "Bu ders için denenecek derslik yok (bölüme tanımlı derslik bulunamadı)"));
                 continue;
             }
-            
             List<Aday> adaylar = adaylariUret(izgara, blok, sube, sinifIdler, derslikler, durum);
 
             Aday secilen = null;
@@ -217,7 +218,7 @@ public class OtomatikPlanlamaService {
                     break;
                 }
                 List<Ihlal> ihlaller = denetleyici.kontrolEt(blok, sube, ders, aday.gun(),
-                        aday.baslangic(), List.of(aday.derslikId()));
+                        aday.baslangic(), List.of(aday.derslikId()), digerBolum);
                 boolean engelVar = false;
                 int uyari = 0;
                 for (Ihlal i : ihlaller) {

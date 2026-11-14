@@ -11,4 +11,6 @@ public interface ProgramProjesiRepository extends JpaRepository<ProgramProjesi, 
     List<ProgramProjesi> findByBolumIdOrderByOlusturmaTarihiDesc(Long bolumId);
 
     List<ProgramProjesi> findByBolumIdIn(Collection<Long> bolumIdler, Sort sort);
+
+    List<ProgramProjesi> findByKurumId(Long kurumId);
 }
